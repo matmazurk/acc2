@@ -28,15 +28,15 @@ type data struct {
 }
 
 func main() {
-	templ, err := template.ParseFiles("index.html")
+	templ, err := template.ParseFiles("http/templates/index.html")
 	if err != nil {
 		panic(err)
 	}
-	add, err := template.ParseFiles("add.html")
+	add, err := template.ParseFiles("http/templates/add.html")
 	if err != nil {
 		panic(err)
 	}
-	categories, err := template.ParseFiles("categories.html")
+	categories, err := template.ParseFiles("http/templates/categories.html")
 	if err != nil {
 		panic(err)
 	}
