@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./src/output.css" rel="stylesheet">
+</head>
+
+<body>
+    <h2>Add Expense</h2>
+    <form action="/submit-data" method="post" class="max-w-md mx-auto">
+        <label for="description" class="block">Description:</label>
+        <input type="text" id="description" name="description" required
+            class="w-full border rounded-md px-3 py-2"><br><br>
+
+        <label for="person" class="block">Person:</label>
+        <input type="text" id="person" name="person" required class="w-full border rounded-md px-3 py-2"><br><br>
+
+        <label for="amount" class="block">Amount:</label>
+        <input type="text" id="amount" name="amount" required class="w-full border rounded-md px-3 py-2"><br><br>
+
+        <label for="currency" class="block">Currency:</label>
+        <input type="text" id="currency" name="currency" required class="w-full border rounded-md px-3 py-2"><br><br>
+
+        <label for="time" class="block">Time:</label>
+        <input type="text" id="time" name="time" required class="w-full border rounded-md px-3 py-2"><br><br>
+
+        <input type="submit" value="Submit" class="bg-blue-500 hover:bg-blue-600 text-white rounded-md px-4 py-2">
+    </form>
+</body>
+
+</html>
