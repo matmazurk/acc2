@@ -9,6 +9,12 @@ import (
 
 const listenAddr = ":80"
 
+type Category string
+
+type ddata struct {
+	Categories []Category
+}
+
 type Expense struct {
 	Description string
 	Person      string
@@ -27,6 +33,10 @@ func main() {
 		panic(err)
 	}
 	add, err := template.ParseFiles("add.html")
+	if err != nil {
+		panic(err)
+	}
+	categories, err := template.ParseFiles("categories.html")
 	if err != nil {
 		panic(err)
 	}
@@ -70,8 +80,26 @@ func main() {
 		templ.Execute(w, data)
 	})
 	http.HandleFunc("GET /add", func(w http.ResponseWriter, r *http.Request) {
+		type Data struct {
+			Users      []string
+			Categories []string
+		}
+		data := Data{
+			Users:      []string{"mat", "paulka"},
+			Categories: []string{"zakupy", "zachcianki"},
+		}
 		add.Execute(w, data)
 	})
+	http.HandleFunc("GET /categories", func(w http.ResponseWriter, r *http.Request) {
+		data := ddata{
+			Categories: []Category{
+				"jedzenie", "zakupy", "zachcianki",
+			},
+		}
+
+		categories.Execute(w, data)
+	})
+	http.Handle("POST /expenses/add", http.RedirectHandler("/expenses", http.StatusFound))
 
 	log.Println("listening on ", listenAddr)
 	http.ListenAndServe(listenAddr, nil)

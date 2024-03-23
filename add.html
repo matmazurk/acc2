@@ -1,33 +1,35 @@
-<!doctype html>
-<html>
+<div>
+    <a href="/expenses" style="text-decoration: none;">
+        <svg clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg" width="50" height="50">
+            <path
+                d="m10.978 14.999v3.251c0 .412-.335.75-.752.75-.188 0-.375-.071-.518-.206-1.775-1.685-4.945-4.692-6.396-6.069-.2-.189-.312-.452-.312-.725 0-.274.112-.536.312-.725 1.451-1.377 4.621-4.385 6.396-6.068.143-.136.33-.207.518-.207.417 0 .752.337.752.75v3.251h9.02c.531 0 1.002.47 1.002 1v3.998c0 .53-.471 1-1.002 1zm-1.5-7.506-4.751 4.507 4.751 4.507v-3.008h10.022v-2.998h-10.022z"
+                fill-rule="nonzero" />
+        </svg>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="./src/output.css" rel="stylesheet">
-</head>
-
-<body>
-    <h2>Add Expense</h2>
-    <form action="/submit-data" method="post" class="max-w-md mx-auto">
-        <label for="description" class="block">Description:</label>
-        <input type="text" id="description" name="description" required
-            class="w-full border rounded-md px-3 py-2"><br><br>
-
-        <label for="person" class="block">Person:</label>
-        <input type="text" id="person" name="person" required class="w-full border rounded-md px-3 py-2"><br><br>
-
-        <label for="amount" class="block">Amount:</label>
-        <input type="text" id="amount" name="amount" required class="w-full border rounded-md px-3 py-2"><br><br>
-
-        <label for="currency" class="block">Currency:</label>
-        <input type="text" id="currency" name="currency" required class="w-full border rounded-md px-3 py-2"><br><br>
-
-        <label for="time" class="block">Time:</label>
-        <input type="text" id="time" name="time" required class="w-full border rounded-md px-3 py-2"><br><br>
-
-        <input type="submit" value="Submit" class="bg-blue-500 hover:bg-blue-600 text-white rounded-md px-4 py-2">
+    </a>
+    <form id="expensesForm" action="/expenses/add" method="POST"
+        class="flex flex-col justify-center items-center p-1 space-y-1 text-xl">
+        <input type="text" name="description" id="description" placeholder="Description"
+            class="border p-2 w-96"></input>
+        <div class="p-1 flex flex-row">
+            <input type="number" name="amount" id="amount" placeholder="1.0" step="0.01" min="0" max="99999"
+                class="border p-2"></input>
+            <select id="currency" name="currency">
+                <option value="zl">zł</option>
+                <option value="euro">€</option>
+            </select>
+        </div>
+        <select name="author" id="author" class="p-2">
+            {{ range .Users }}
+            <option value={{ . }}>{{ . }}</option>
+            {{ end }}
+        </select>
+        <select name="category" id="category" class="p-2">
+            {{ range .Categories }}
+            <option value={{ . }}>{{ . }}</option>
+            {{ end }}
+        </select>
+        <input type="submit" value="Submit" class="p-2 rounded-lg bg-black text-white"></input>
     </form>
-</body>
-
-</html>
+</div>

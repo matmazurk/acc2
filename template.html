@@ -5,7 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="./src/output.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.11"
+        integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
+        crossorigin="anonymous"></script>
 </head>
+<div id="buttons" class="flex justify-center">
+    <div id="add" class="p-2">
+        <button class="border-solid border-4 rounded-lg p-2" hx-get="/add" hx-swap="outerHTML" hx-target="#buttons">
+            Add new</button>
+    </div>
+    <div id="categories" class="p-2">
+        <button class="border-solid border-4 rounded-lg p-2" hx-get="/categories" hx-swap="outerHTML"
+            hx-target="#buttons">
+            Categories</button>
+    </div>
+</div>
 <div class="p-2">
     <ul id="expenses-list" class="space-y-1">
         {{ range .Expenses }}
@@ -17,14 +31,6 @@
         </li>
         {{ end }}
     </ul>
-</div>
-<div class="fixed bottom-4 right-4">
-    <a href="/add"
-        class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-md">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-    </a>
 </div>
 
 </html>
