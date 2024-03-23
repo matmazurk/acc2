@@ -28,7 +28,7 @@ type data struct {
 }
 
 func main() {
-	templ, err := template.ParseFiles("template.html")
+	templ, err := template.ParseFiles("index.html")
 	if err != nil {
 		panic(err)
 	}
@@ -74,9 +74,9 @@ func main() {
 		},
 	}
 
-	http.Handle("/src/", http.StripPrefix("/src/", NoCache(http.FileServer(http.Dir("./src")))))
+	http.Handle("GET /src/", http.StripPrefix("/src/", NoCache(http.FileServer(http.Dir("./src")))))
 
-	http.HandleFunc("GET /expenses", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		templ.Execute(w, data)
 	})
 	http.HandleFunc("GET /add", func(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +99,8 @@ func main() {
 
 		categories.Execute(w, data)
 	})
-	http.Handle("POST /expenses/add", http.RedirectHandler("/expenses", http.StatusFound))
+	http.Handle("POST /expenses/add", http.RedirectHandler("/", http.StatusFound))
+	http.Handle("POST /categories/add", http.RedirectHandler("/", http.StatusFound))
 
 	log.Println("listening on ", listenAddr)
 	http.ListenAndServe(listenAddr, nil)

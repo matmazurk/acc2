@@ -9,6 +9,7 @@
         integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
         crossorigin="anonymous"></script>
 </head>
+
 <div id="buttons" class="flex justify-center">
     <div id="add" class="p-2">
         <button class="border-solid border-4 rounded-lg p-2" hx-get="/add" hx-swap="outerHTML" hx-target="#buttons">
@@ -20,6 +21,7 @@
             Categories</button>
     </div>
 </div>
+
 <div class="p-2">
     <ul id="expenses-list" class="space-y-1">
         {{ range .Expenses }}
