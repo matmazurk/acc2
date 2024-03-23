@@ -15,20 +15,21 @@ type handler struct {
 }
 
 func NewMux() *http.ServeMux {
-	t, err := template.ParseFS(content, "templates/*.html")
+	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
 		panic(err)
 	}
+
 	mux := http.NewServeMux()
 	h := handler{
-		templates: t,
+		templates: templates,
 	}
-	h.route(mux)
+	h.routes(mux)
 
 	return mux
 }
 
-func (h handler) route(m *http.ServeMux) {
+func (h handler) routes(m *http.ServeMux) {
 	m.Handle("GET /src/", h.mountSrc())
 	m.HandleFunc("GET /", h.getIndex())
 	m.HandleFunc("GET /categories", h.getCategories())
