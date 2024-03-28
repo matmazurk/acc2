@@ -98,3 +98,33 @@ func (d db) CreateCategory(name string) error {
 
 	return nil
 }
+
+func (d db) ListPayers() ([]string, error) {
+	var payers []payer
+	res := d.db.Find(&payers)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	ret := make([]string, len(payers))
+	for i, p := range payers {
+		ret[i] = p.Name
+	}
+
+	return ret, nil
+}
+
+func (d db) ListCategories() ([]string, error) {
+	var categories []category
+	res := d.db.Find(&categories)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	ret := make([]string, len(categories))
+	for i, c := range categories {
+		ret[i] = c.Name
+	}
+
+	return ret, nil
+}

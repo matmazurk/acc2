@@ -19,15 +19,30 @@ func TestDB(t *testing.T) {
 	database, err := db.New(dbFilepath)
 	require.NoError(t, err)
 
-	t.Run("should_properly_insert_select_expenses", func(t *testing.T) {
-		const payer = "some-payer"
+	const payer = "some-payer"
+	const groceries = "groceries"
+
+	t.Run("should_properly_insert_list_payers", func(t *testing.T) {
 		err := database.CreatePayer(payer)
 		require.NoError(t, err)
 
-		const groceries = "groceries"
+		payers, err := database.ListPayers()
+		require.NoError(t, err)
+
+		require.Equal(t, []string{payer}, payers)
+	})
+
+	t.Run("should_properly_insert_list_categories", func(t *testing.T) {
 		err = database.CreateCategory(groceries)
 		require.NoError(t, err)
 
+		categories, err := database.ListCategories()
+		require.NoError(t, err)
+
+		require.Equal(t, []string{groceries}, categories)
+	})
+
+	t.Run("should_properly_insert_select_expenses", func(t *testing.T) {
 		now := time.Now()
 		exp1, err := expense.NewExpense(
 			"shopping",
