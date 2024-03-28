@@ -91,7 +91,7 @@ func (h handler) getIndex() http.HandlerFunc {
 					Amount:      e.Amount(),
 					Category:    e.Category(),
 					Currency:    e.Currency(),
-					Time:        e.Time().Format(time.RFC3339),
+					Time:        e.Time().Format("02 Jan 06 15:04"),
 				}
 			}
 			h.templates.ExecuteTemplate(w, "index.html", d)
