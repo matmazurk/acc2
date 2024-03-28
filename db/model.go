@@ -24,7 +24,7 @@ func (e expense) toExpense() (exp.Expense, error) {
 
 type payer struct {
 	ID   uint
-	Name string
+	Name string `gorm:"uniqueIndex"`
 }
 
 func (p payer) isZero() bool {
@@ -33,7 +33,7 @@ func (p payer) isZero() bool {
 
 type category struct {
 	ID   uint
-	Name string
+	Name string `gorm:"uniqueIndex"`
 }
 
 func (c category) isZero() bool {

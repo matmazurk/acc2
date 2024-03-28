@@ -25,6 +25,8 @@ func TestDB(t *testing.T) {
 	t.Run("should_properly_insert_list_payers", func(t *testing.T) {
 		err := database.CreatePayer(payer)
 		require.NoError(t, err)
+		err = database.CreatePayer(payer)
+		require.Error(t, err)
 
 		payers, err := database.ListPayers()
 		require.NoError(t, err)
@@ -35,6 +37,8 @@ func TestDB(t *testing.T) {
 	t.Run("should_properly_insert_list_categories", func(t *testing.T) {
 		err = database.CreateCategory(groceries)
 		require.NoError(t, err)
+		err = database.CreateCategory(groceries)
+		require.Error(t, err)
 
 		categories, err := database.ListCategories()
 		require.NoError(t, err)
