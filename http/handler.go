@@ -5,23 +5,38 @@ import (
 	"html/template"
 	"net/http"
 	"time"
+
+	"github.com/matmazurk/acc2/expense"
 )
 
 //go:embed templates/*.html
 var content embed.FS
 
 type handler struct {
+	pers      inter
 	templates *template.Template
 }
 
-func NewMux() *http.ServeMux {
+type inter interface {
+	Insert(e expense.Expense) error
+	SelectExpenses() ([]expense.Expense, error)
+	CreatePayer(name string) error
+	CreateCategory(name string) error
+	ListPayers() ([]string, error)
+	ListCategories() ([]string, error)
+}
+
+func NewMux(i inter) *http.ServeMux {
 	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
 		panic(err)
 	}
 
 	mux := http.NewServeMux()
+	i.CreatePayer("mat")
+	i.CreatePayer("paulka")
 	h := handler{
+		pers:      i,
 		templates: templates,
 	}
 	h.routes(mux)
@@ -34,8 +49,8 @@ func (h handler) routes(m *http.ServeMux) {
 	m.HandleFunc("GET /", h.getIndex())
 	m.HandleFunc("GET /categories", h.getCategories())
 	m.HandleFunc("GET /add", h.getAddExpense())
-	m.Handle("POST /expenses/add", http.RedirectHandler("/", http.StatusFound))
-	m.Handle("POST /categories/add", http.RedirectHandler("/", http.StatusFound))
+	m.Handle("POST /expenses/add", h.addExpense())
+	m.Handle("POST /categories/add", h.addCategory())
 }
 
 func (h handler) mountSrc() http.HandlerFunc {
@@ -51,76 +66,130 @@ func (h handler) getIndex() http.HandlerFunc {
 		Description string
 		Person      string
 		Amount      string
+		Category    string
 		Currency    string
 		Time        string
 	}
 	type data struct {
 		Expenses []Expense
 	}
-	d := data{
-		Expenses: []Expense{
-			{
-				Description: "zakupy biedra",
-				Person:      "mat",
-				Amount:      "11.23",
-				Currency:    "zł",
-				Time:        "23-03-2024 13:33",
-			},
-			{
-				Description: "wazne wydatki",
-				Person:      "mat",
-				Amount:      "322.43",
-				Currency:    "€",
-				Time:        "24-03-2024 14:33",
-			},
-			{
-				Description: "dupsko",
-				Person:      "mat",
-				Amount:      "32.43",
-				Currency:    "zł",
-				Time:        "22-03-2024 14:33",
-			},
-			{
-				Description: "dlugi opis zakupuw dupa oko sklep",
-				Person:      "mat",
-				Amount:      "32.43",
-				Currency:    "zł",
-				Time:        "14:33 22-03-2024",
-			},
-		},
-	}
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			exps, err := h.pers.SelectExpenses()
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			d := data{
+				Expenses: make([]Expense, len(exps)),
+			}
+			for i, e := range exps {
+				d.Expenses[i] = Expense{
+					Description: e.Description(),
+					Person:      e.Payer(),
+					Amount:      e.Amount(),
+					Category:    e.Category(),
+					Currency:    e.Currency(),
+					Time:        e.Time().Format(time.RFC3339),
+				}
+			}
 			h.templates.ExecuteTemplate(w, "index.html", d)
 		})
 }
 
 func (h handler) getCategories() http.HandlerFunc {
-	type Category string
 	type ddata struct {
-		Categories []Category
+		Categories []string
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data := ddata{
-			Categories: []Category{
-				"jedzenie", "zakupy", "zachcianki",
-			},
+		categories, err := h.pers.ListCategories()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
 		}
-
+		data := ddata{Categories: categories}
 		h.templates.ExecuteTemplate(w, "categories.html", data)
 	})
 }
 
 func (h handler) getAddExpense() http.HandlerFunc {
+	type Data struct {
+		Users      []string
+		Categories []string
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		type Data struct {
-			Users      []string
-			Categories []string
+		payers, err := h.pers.ListPayers()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
 		}
+		categories, err := h.pers.ListCategories()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		data := Data{
-			Users:      []string{"mat", "paulka"},
-			Categories: []string{"zakupy", "zachcianki"},
+			Users:      payers,
+			Categories: categories,
 		}
 		h.templates.ExecuteTemplate(w, "add.html", data)
+	})
+}
+
+func (h handler) addExpense() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		description := r.FormValue("description")
+		amount := r.FormValue("amount")
+		currency := r.FormValue("currency")
+		payer := r.FormValue("author")
+		category := r.FormValue("category")
+
+		exp, err := expense.NewExpense(description, payer, category, amount, currency, time.Now())
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		err = h.pers.Insert(exp)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	})
+}
+
+func (h handler) addCategory() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		category := r.FormValue("category")
+
+		err = h.pers.CreateCategory(category)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		http.Redirect(w, r, "/", http.StatusFound)
 	})
 }
