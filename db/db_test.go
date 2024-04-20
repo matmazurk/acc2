@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/matmazurk/acc2/db"
-	"github.com/matmazurk/acc2/expense"
+	"github.com/matmazurk/acc2/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,7 +48,7 @@ func TestDB(t *testing.T) {
 
 	t.Run("should_properly_insert_select_expenses", func(t *testing.T) {
 		now := time.Now()
-		exp1, err := expense.NewExpense(
+		exp1, err := model.NewExpense(
 			"shopping",
 			payer,
 			groceries,
@@ -60,7 +60,7 @@ func TestDB(t *testing.T) {
 		err = database.Insert(exp1)
 		require.NoError(t, err)
 
-		exp2, err := expense.NewExpense(
+		exp2, err := model.NewExpense(
 			"some other shopping",
 			payer,
 			groceries,
@@ -72,7 +72,7 @@ func TestDB(t *testing.T) {
 		err = database.Insert(exp2)
 		require.NoError(t, err)
 
-		exp3, err := expense.NewExpense(
+		exp3, err := model.NewExpense(
 			"yet some other shopping",
 			payer,
 			groceries,
@@ -84,7 +84,7 @@ func TestDB(t *testing.T) {
 		err = database.Insert(exp3)
 		require.NoError(t, err)
 
-		expectedOrder := []expense.Expense{
+		expectedOrder := []model.Expense{
 			exp3,
 			exp2,
 			exp1,
@@ -99,7 +99,7 @@ func TestDB(t *testing.T) {
 	})
 }
 
-func expensesEqual(t *testing.T, e1, e2 expense.Expense) {
+func expensesEqual(t *testing.T, e1, e2 model.Expense) {
 	t.Helper()
 
 	if e1.ID() != e2.ID() {
