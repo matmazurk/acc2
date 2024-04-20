@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/matmazurk/acc2/expense"
+	"github.com/matmazurk/acc2/model"
 )
 
 //go:embed templates/*.html
@@ -22,8 +22,8 @@ type handler struct {
 }
 
 type inter interface {
-	Insert(e expense.Expense) error
-	SelectExpenses() ([]expense.Expense, error)
+	Insert(e model.Expense) error
+	SelectExpenses() ([]model.Expense, error)
 	CreatePayer(name string) error
 	CreateCategory(name string) error
 	ListPayers() ([]string, error)
@@ -165,7 +165,7 @@ func (h handler) addExpense() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 		}
 
-		exp, err := expense.NewExpense(description, payer, category, amount, currency, time.Now())
+		exp, err := model.NewExpense(description, payer, category, amount, currency, time.Now())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

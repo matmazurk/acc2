@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	exp "github.com/matmazurk/acc2/expense"
+	"github.com/matmazurk/acc2/model"
 )
 
 type expense struct {
@@ -18,8 +18,8 @@ type expense struct {
 	CreatedAt   time.Time
 }
 
-func (e expense) toExpense() (exp.Expense, error) {
-	return exp.NewExpenseWithID(e.ID, e.Description, e.Payer.Name, e.Category.Name, e.Amount, e.Currency, e.CreatedAt)
+func (e expense) toExpense() (model.Expense, error) {
+	return model.NewExpenseWithID(e.ID, e.Description, e.Payer.Name, e.Category.Name, e.Amount, e.Currency, e.CreatedAt)
 }
 
 type payer struct {

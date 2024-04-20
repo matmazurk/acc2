@@ -4,7 +4,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	exp "github.com/matmazurk/acc2/expense"
+	"github.com/matmazurk/acc2/model"
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +26,7 @@ func New(path string) (db, error) {
 	return db{db: database}, nil
 }
 
-func (d db) Insert(e exp.Expense) error {
+func (d db) Insert(e model.Expense) error {
 	var p payer
 	res := d.db.First(&p, "name = ?", e.Payer())
 	if res.Error != nil {
@@ -62,14 +62,14 @@ func (d db) Insert(e exp.Expense) error {
 	return nil
 }
 
-func (d db) SelectExpenses() ([]exp.Expense, error) {
+func (d db) SelectExpenses() ([]model.Expense, error) {
 	var exps []expense
 	res := d.db.Preload("Payer").Preload("Category").Model(&expense{}).Order("created_at DESC").Find(&exps)
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	es := make([]exp.Expense, len(exps))
+	es := make([]model.Expense, len(exps))
 	var err error
 	for i, e := range exps {
 		es[i], err = e.toExpense()
