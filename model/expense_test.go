@@ -82,12 +82,33 @@ func TestExpenseBuilder(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run("Build_fails_"+tc.name, func(t *testing.T) {
 			expense, err := tc.in.Build()
 			fmt.Println(err.Error())
 			require.Empty(t, expense)
 			require.ErrorContains(t, err, tc.errContains)
 		})
 	}
+
+	t.Run("Build_succeeded", func(t *testing.T) {
+		eb := model.ExpenseBuilder{
+			Id:          "57f8ea23-4387-491b-bbb0-7195a0e15127",
+			Description: "some description",
+			Payer:       "some payer",
+			Category:    "some category",
+			Amount:      "2.22",
+			Currency:    "USD",
+			Timestamp:   time.Now(),
+		}
+		expense, err := eb.Build()
+		require.NoError(t, err)
+		require.Equal(t, eb.Id, expense.ID())
+		require.Equal(t, eb.Description, expense.Description())
+		require.Equal(t, eb.Payer, expense.Payer())
+		require.Equal(t, eb.Category, expense.Category())
+		require.Equal(t, eb.Amount, expense.Amount())
+		require.Equal(t, eb.Currency, expense.Currency())
+		require.True(t, eb.Timestamp.Equal(expense.Time()))
+	})
 }
 
