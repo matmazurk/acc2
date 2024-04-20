@@ -52,7 +52,7 @@ func (d db) Insert(e model.Expense) error {
 		CategoryID:  c.ID,
 		Amount:      e.Amount(),
 		Currency:    e.Currency(),
-		CreatedAt:   e.Time(),
+		CreatedAt:   e.CreatedAt(),
 	}
 	res = d.db.Create(&toInsert)
 	if res.Error != nil {

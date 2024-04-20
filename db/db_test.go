@@ -126,7 +126,7 @@ func expensesEqual(t *testing.T, e1, e2 model.Expense) {
 		t.Errorf("currencies not matching '%s' != '%s'", e1.Currency(), e2.Currency())
 	}
 
-	if !e1.Time().Equal(e2.Time()) {
-		t.Errorf("currencies not matching '%s' != '%s'", e1.Time().Format(time.RFC3339), e2.Time().Format(time.RFC3339))
+	if !e1.CreatedAt().Equal(e2.CreatedAt()) {
+		t.Errorf("currencies not matching '%s' != '%s'", e1.CreatedAt().Format(time.RFC3339), e2.CreatedAt().Format(time.RFC3339))
 	}
 }

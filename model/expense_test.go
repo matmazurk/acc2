@@ -108,7 +108,7 @@ func TestExpenseBuilder(t *testing.T) {
 		require.Equal(t, eb.Category, expense.Category())
 		require.Equal(t, eb.Amount, expense.Amount())
 		require.Equal(t, eb.Currency, expense.Currency())
-		require.True(t, eb.CreatedAt.Equal(expense.Time()))
+		require.True(t, eb.CreatedAt.Equal(expense.CreatedAt()))
 	})
 }
 

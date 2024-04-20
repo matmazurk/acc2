@@ -18,6 +18,7 @@ type Expense struct {
 }
 
 type ExpenseBuilder struct {
+	// when not provided, new id will be generated
 	Id          string
 	Description string
 	Payer       string
@@ -82,7 +83,7 @@ func (e Expense) Equal(other Expense) bool {
 		e.Category() == other.Category() &&
 		e.Amount() == other.Amount() &&
 		e.Currency() == other.Currency() &&
-		e.Time().Equal(other.Time())
+		e.CreatedAt().Equal(other.CreatedAt())
 }
 
 func (e Expense) ID() string {
@@ -109,6 +110,6 @@ func (e Expense) Currency() string {
 	return e.currency
 }
 
-func (e Expense) Time() time.Time {
+func (e Expense) CreatedAt() time.Time {
 	return e.createdAt
 }
