@@ -68,16 +68,16 @@ func TestExpenseBuilder(t *testing.T) {
 			errContains: "currency cannot be empty",
 		},
 		{
-			name: "invalid_timestamp",
+			name: "invalid_createdAt",
 			in: model.ExpenseBuilder{
 				Description: "some description",
 				Payer:       "some payer",
 				Category:    "some category",
 				Amount:      "22.22",
 				Currency:    "USD",
-				Timestamp:   time.Time{},
+				CreatedAt:   time.Time{},
 			},
-			errContains: "timestamp cannot be zero value",
+			errContains: "createdAt cannot be zero value",
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestExpenseBuilder(t *testing.T) {
 			Category:    "some category",
 			Amount:      "2.22",
 			Currency:    "USD",
-			Timestamp:   time.Now(),
+			CreatedAt:   time.Now(),
 		}
 		expense, err := eb.Build()
 		require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestExpenseBuilder(t *testing.T) {
 		require.Equal(t, eb.Category, expense.Category())
 		require.Equal(t, eb.Amount, expense.Amount())
 		require.Equal(t, eb.Currency, expense.Currency())
-		require.True(t, eb.Timestamp.Equal(expense.Time()))
+		require.True(t, eb.CreatedAt.Equal(expense.Time()))
 	})
 }
 

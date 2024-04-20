@@ -14,7 +14,7 @@ type Expense struct {
 	category    string
 	amount      string
 	currency    string
-	timestamp   time.Time
+	createdAt   time.Time
 }
 
 type ExpenseBuilder struct {
@@ -24,7 +24,7 @@ type ExpenseBuilder struct {
 	Category    string
 	Amount      string
 	Currency    string
-	Timestamp   time.Time
+	CreatedAt   time.Time
 }
 
 func (eb ExpenseBuilder) Build() (Expense, error) {
@@ -53,8 +53,8 @@ func (eb ExpenseBuilder) Build() (Expense, error) {
 		return Expense{}, errors.New("currency cannot be empty")
 	}
 
-	if eb.Timestamp.IsZero() {
-		return Expense{}, errors.New("timestamp cannot be zero value")
+	if eb.CreatedAt.IsZero() {
+		return Expense{}, errors.New("createdAt cannot be zero value")
 	}
 
 	return Expense{
@@ -64,7 +64,7 @@ func (eb ExpenseBuilder) Build() (Expense, error) {
 		category:    eb.Category,
 		amount:      eb.Amount,
 		currency:    eb.Currency,
-		timestamp:   eb.Timestamp,
+		createdAt:   eb.CreatedAt,
 	}, nil
 }
 
@@ -96,7 +96,7 @@ func NewExpenseWithID(
 		category:    category,
 		amount:      amount,
 		currency:    currency,
-		timestamp:   timestamp,
+		createdAt:   timestamp,
 	}, nil
 }
 
@@ -120,7 +120,7 @@ func NewExpense(
 		category:    category,
 		amount:      amount,
 		currency:    currency,
-		timestamp:   timestamp,
+		createdAt:   timestamp,
 	}, nil
 }
 
@@ -159,5 +159,5 @@ func (e Expense) Currency() string {
 }
 
 func (e Expense) Time() time.Time {
-	return e.timestamp
+	return e.createdAt
 }
