@@ -2,8 +2,12 @@ package http
 
 import (
 	"embed"
+	"errors"
 	"html/template"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/matmazurk/acc2/expense"
@@ -143,7 +147,7 @@ func (h handler) getAddExpense() http.HandlerFunc {
 
 func (h handler) addExpense() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := r.ParseForm()
+		err := r.ParseMultipartForm(10 << 20)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -154,6 +158,12 @@ func (h handler) addExpense() http.HandlerFunc {
 		currency := r.FormValue("currency")
 		payer := r.FormValue("author")
 		category := r.FormValue("category")
+		// Copy the photo data from the form to the new file
+		err = savePhoto(r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
 
 		exp, err := expense.NewExpense(description, payer, category, amount, currency, time.Now())
 		if err != nil {
@@ -171,6 +181,31 @@ func (h handler) addExpense() http.HandlerFunc {
 
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
+}
+
+func savePhoto(r *http.Request) error {
+	file, header, err := r.FormFile("photo")
+	if err != nil {
+		if errors.Is(err, http.ErrMissingFile) {
+			return nil
+		}
+
+		return err
+	}
+	defer file.Close()
+	log.Printf("file header: %v\n", header.Filename)
+
+	outFile, err := os.Create("uploaded_photo.jpg")
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, file)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (h handler) addCategory() http.HandlerFunc {

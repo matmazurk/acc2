@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,11 +12,15 @@ import (
 const listenAddr = ":80"
 
 func main() {
+	fmt.Println("starting...")
 	db, err := db.New("exps.db")
 	if err != nil {
 		panic(err)
 	}
 	mux := lhttp.NewMux(db)
-	log.Println("listening on ", listenAddr)
-	http.ListenAndServe(listenAddr, mux)
+	log.Println("listening on", listenAddr)
+	err = http.ListenAndServe(listenAddr, mux)
+	if err != nil {
+		panic(err)
+	}
 }
