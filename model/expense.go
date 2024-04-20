@@ -75,55 +75,6 @@ func parseID(id string) (uuid.UUID, error) {
 	return uuid.Parse(id)
 }
 
-func NewExpenseWithID(
-	id string,
-	description string,
-	payer string,
-	category string,
-	amount string,
-	currency string,
-	timestamp time.Time,
-) (Expense, error) {
-	uid, err := uuid.Parse(id)
-	if err != nil {
-		return Expense{}, err
-	}
-
-	return Expense{
-		id:          uid,
-		description: description,
-		payer:       payer,
-		category:    category,
-		amount:      amount,
-		currency:    currency,
-		createdAt:   timestamp,
-	}, nil
-}
-
-func NewExpense(
-	description string,
-	payer string,
-	category string,
-	amount string,
-	currency string,
-	timestamp time.Time,
-) (Expense, error) {
-	uid, err := uuid.NewRandom()
-	if err != nil {
-		return Expense{}, err
-	}
-
-	return Expense{
-		id:          uid,
-		description: description,
-		payer:       payer,
-		category:    category,
-		amount:      amount,
-		currency:    currency,
-		createdAt:   timestamp,
-	}, nil
-}
-
 func (e Expense) Equal(other Expense) bool {
 	return e.ID() == other.ID() &&
 		e.Description() == other.Description() &&

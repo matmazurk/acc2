@@ -165,7 +165,14 @@ func (h handler) addExpense() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 		}
 
-		exp, err := model.NewExpense(description, payer, category, amount, currency, time.Now())
+		exp, err := model.ExpenseBuilder{
+			Description: description,
+			Payer:       payer,
+			Category:    category,
+			Amount:      amount,
+			Currency:    currency,
+			CreatedAt:   time.Now(),
+		}.Build()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

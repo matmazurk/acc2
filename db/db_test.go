@@ -48,38 +48,38 @@ func TestDB(t *testing.T) {
 
 	t.Run("should_properly_insert_select_expenses", func(t *testing.T) {
 		now := time.Now()
-		exp1, err := model.NewExpense(
-			"shopping",
-			payer,
-			groceries,
-			"10.22",
-			"EUR",
-			now,
-		)
+		exp1, err := model.ExpenseBuilder{
+			Description: "shopping",
+			Payer:       payer,
+			Category:    groceries,
+			Amount:      "10.22",
+			Currency:    "EUR",
+			CreatedAt:   now,
+		}.Build()
 		require.NoError(t, err)
 		err = database.Insert(exp1)
 		require.NoError(t, err)
 
-		exp2, err := model.NewExpense(
-			"some other shopping",
-			payer,
-			groceries,
-			"22.22",
-			"EUR",
-			now.Add(time.Minute),
-		)
+		exp2, err := model.ExpenseBuilder{
+			Description: "some other shopping",
+			Payer:       payer,
+			Category:    groceries,
+			Amount:      "22.22",
+			Currency:    "EUR",
+			CreatedAt:   now.Add(time.Minute),
+		}.Build()
 		require.NoError(t, err)
 		err = database.Insert(exp2)
 		require.NoError(t, err)
 
-		exp3, err := model.NewExpense(
-			"yet some other shopping",
-			payer,
-			groceries,
-			"21.37",
-			"EUR",
-			now.Add(time.Hour),
-		)
+		exp3, err := model.ExpenseBuilder{
+			Description: "yet some other shopping",
+			Payer:       payer,
+			Category:    groceries,
+			Amount:      "21.37",
+			Currency:    "EUR",
+			CreatedAt:   now.Add(time.Hour),
+		}.Build()
 		require.NoError(t, err)
 		err = database.Insert(exp3)
 		require.NoError(t, err)

@@ -19,7 +19,15 @@ type expense struct {
 }
 
 func (e expense) toExpense() (model.Expense, error) {
-	return model.NewExpenseWithID(e.ID, e.Description, e.Payer.Name, e.Category.Name, e.Amount, e.Currency, e.CreatedAt)
+	return model.ExpenseBuilder{
+		Id:          e.ID,
+		Description: e.Description,
+		Payer:       e.Payer.Name,
+		Category:    e.Category.Name,
+		Amount:      e.Amount,
+		Currency:    e.Currency,
+		CreatedAt:   e.CreatedAt,
+	}.Build()
 }
 
 type payer struct {
