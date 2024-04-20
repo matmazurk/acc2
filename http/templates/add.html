@@ -30,7 +30,9 @@
             <option value={{ . }}>{{ . }}</option>
             {{ end }}
         </select>
-        <input type="file" id="photo" name="photo" accept="image/*"></input>
+        <div class="flex justify-center">
+            <input type="file" name="photo" accept="image/*" class="w-96">
+        </div>
         <input type="submit" value="Submit" class="p-2 rounded-lg bg-black text-white"></input>
     </form>
 </div>
