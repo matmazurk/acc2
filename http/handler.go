@@ -6,8 +6,10 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/matmazurk/acc2/model"
@@ -200,7 +202,25 @@ func savePhoto(r *http.Request) error {
 		return err
 	}
 	defer file.Close()
+	contentType := header.Header.Get("Content-Type")
+
+	// Extract file extension from content type
+	exts, err := mime.ExtensionsByType(contentType)
+	if err != nil {
+		return err
+	}
+	log.Printf("%v\n", exts)
+
+	var ext string
+	if len(exts) > 0 {
+		// Get the first extension
+		ext = exts[0]
+	} else {
+		// Fallback to extracting extension from filename
+		ext = extractExtension(header.Filename)
+	}
 	log.Printf("file header: %v\n", header.Filename)
+	log.Printf("file header: %s\n", ext)
 
 	outFile, err := os.Create("uploaded_photo.jpg")
 	if err != nil {
@@ -213,6 +233,14 @@ func savePhoto(r *http.Request) error {
 		return err
 	}
 	return err
+}
+
+func extractExtension(filename string) string {
+	parts := strings.Split(filename, ".")
+	if len(parts) > 1 {
+		return "." + parts[len(parts)-1]
+	}
+	return ""
 }
 
 func (h handler) addCategory() http.HandlerFunc {
