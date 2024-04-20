@@ -25,7 +25,7 @@ func NewStore(basepath string) (store, error) {
 
 const (
 	photosRelativeDir  = "/photos"
-	filenameTimeLayout = "010206_1504"
+	filenameTimeLayout = "020106_1504"
 )
 
 func (s store) SaveExpensePhoto(e model.Expense, fileExtension string, r io.ReadCloser) error {
