@@ -3,6 +3,8 @@ package db
 import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 
 	"github.com/matmazurk/acc2/model"
 	"github.com/pkg/errors"
@@ -13,7 +15,14 @@ type db struct {
 }
 
 func New(path string) (db, error) {
-	database, err := gorm.Open(sqlite.Open(path), &gorm.Config{})
+	database, err := gorm.Open(sqlite.Open(path), &gorm.Config{
+		SkipDefaultTransaction: false,
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+		},
+		FullSaveAssociations: false,
+		Logger:               logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return db{}, errors.Errorf("could not connect to database under '%s'", path)
 	}
