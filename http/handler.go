@@ -8,7 +8,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
-	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -20,6 +20,7 @@ var content embed.FS
 
 type handler struct {
 	pers      inter
+	store     store
 	templates *template.Template
 }
 
@@ -32,7 +33,11 @@ type inter interface {
 	ListCategories() ([]string, error)
 }
 
-func NewMux(i inter) *http.ServeMux {
+type store interface {
+	SaveExpensePhoto(e model.Expense, fileExtension string, r io.ReadCloser) error
+}
+
+func NewMux(i inter, s store) *http.ServeMux {
 	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
 		panic(err)
@@ -43,6 +48,7 @@ func NewMux(i inter) *http.ServeMux {
 	i.CreatePayer("paulka")
 	h := handler{
 		pers:      i,
+		store:     s,
 		templates: templates,
 	}
 	h.routes(mux)
@@ -160,12 +166,6 @@ func (h handler) addExpense() http.HandlerFunc {
 		currency := r.FormValue("currency")
 		payer := r.FormValue("author")
 		category := r.FormValue("category")
-		// Copy the photo data from the form to the new file
-		err = savePhoto(r)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-		}
 
 		exp, err := model.ExpenseBuilder{
 			Description: description,
@@ -180,6 +180,12 @@ func (h handler) addExpense() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
+		// Copy the photo data from the form to the new file
+		err = h.savePhoto(r, exp)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
 
 		err = h.pers.Insert(exp)
 		if err != nil {
@@ -192,7 +198,7 @@ func (h handler) addExpense() http.HandlerFunc {
 	})
 }
 
-func savePhoto(r *http.Request) error {
+func (h handler) savePhoto(r *http.Request, e model.Expense) error {
 	file, header, err := r.FormFile("photo")
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) {
@@ -212,7 +218,9 @@ func savePhoto(r *http.Request) error {
 	log.Printf("%v\n", exts)
 
 	var ext string
-	if len(exts) > 0 {
+	if slices.Contains(exts, ".jpeg") {
+		ext = "jpeg"
+	} else if len(exts) > 0 {
 		// Get the first extension
 		ext = exts[0]
 	} else {
@@ -222,17 +230,7 @@ func savePhoto(r *http.Request) error {
 	log.Printf("file header: %v\n", header.Filename)
 	log.Printf("file header: %s\n", ext)
 
-	outFile, err := os.Create("uploaded_photo.jpg")
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, file)
-	if err != nil {
-		return err
-	}
-	return err
+	return h.store.SaveExpensePhoto(e, ext, file)
 }
 
 func extractExtension(filename string) string {
