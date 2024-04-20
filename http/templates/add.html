@@ -10,22 +10,22 @@
 
     <form id="expenseForm" action="/expenses/add" method="POST" enctype="multipart/form-data"
         class="flex flex-col justify-center items-center p-1 space-y-1 text-xl">
-        <input type="text" name="description" id="description" placeholder="Description"
-            class="border p-2 w-96"></input>
+        <input type="text" name="description" id="description" placeholder="Description" class="border p-2 w-96"
+            required></input>
         <div class="p-1 flex flex-row">
             <input type="number" name="amount" id="amount" placeholder="1.0" step="0.01" min="0" max="99999"
-                class="border p-2"></input>
+                class="border p-2" required></input>
             <select id="currency" name="currency">
                 <option value="zl">zł</option>
                 <option value="euro">€</option>
             </select>
         </div>
-        <select name="author" id="author" class="p-2">
+        <select name="author" id="author" class="p-2" required>
             {{ range .Users }}
             <option value={{ . }}>{{ . }}</option>
             {{ end }}
         </select>
-        <select name="category" id="category" class="p-2">
+        <select name="category" id="category" class="p-2" required>
             {{ range .Categories }}
             <option value={{ . }}>{{ . }}</option>
             {{ end }}
