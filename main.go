@@ -18,31 +18,34 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const listenAddr = ":80"
-
 func main() {
 	flags := parseFlags()
 	cleanup := setup(flags)
 	defer cleanup()
 
 	ctx, cancel := context.WithCancel(context.Background())
-
+	defer cancel()
 	log.Info().Msg("starting...")
-	db, err := db.New("exps.db")
+
+	db, err := db.New(flags.dbFilename)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Str("filename", flags.dbFilename).Msg("could not open db")
 	}
-	store, err := imagestore.NewStore(".")
+	log.Info().Str("filename", flags.dbFilename).Msg("database opened")
+
+	store, err := imagestore.NewStore(flags.storeDir)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Str("dir", flags.storeDir).Msg("could not open imagestore")
 	}
+	log.Info().Str("dir", flags.storeDir).Msg("imagestore opened")
+
 	server := &http.Server{
-		Addr:    listenAddr,
+		Addr:    flags.httpListenAddr,
 		Handler: lhttp.NewMux(db, store),
 	}
 
 	go func() {
-		log.Info().Str("listen_addr", listenAddr).Msg("starting http server")
+		log.Info().Str("listen_addr", flags.httpListenAddr).Msg("starting http server")
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal().Err(err).Msg("error http server listen")
@@ -55,23 +58,31 @@ func main() {
 	fmt.Println()
 
 	log.Info().Msg("shutting down http server...")
+	ctx, scancel := context.WithTimeout(ctx, 5*time.Second)
 	err = server.Shutdown(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error shutting down http server")
 	}
+	scancel()
 
 	log.Info().Msg("http server gracefully shutdown")
-
-	cancel()
 }
 
 type flags struct {
-	printToStdout bool
+	printToStdout  bool
+	httpListenAddr string
+	dbFilename     string
+	storeDir       string
 }
 
 func parseFlags() flags {
 	f := flags{}
+
 	flag.BoolVar(&f.printToStdout, "s", false, "print output to stdout")
+	flag.StringVar(&f.dbFilename, "db", "exps.db", "expenses database filename")
+	flag.StringVar(&f.httpListenAddr, "httpaddr", ":80", "http server listen address")
+	flag.StringVar(&f.storeDir, "store", ".", "imagestore directory")
+
 	flag.Parse()
 
 	return f
@@ -85,7 +96,7 @@ func setup(f flags) func() {
 	} else {
 		f, err := os.OpenFile("logs", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("could not open 'logs' file")
 		}
 		log.Logger = log.Output(f)
 		callbacks = append(callbacks, func() { f.Close() })
