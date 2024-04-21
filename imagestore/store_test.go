@@ -61,13 +61,13 @@ func TestSaveExpensePhoto(t *testing.T) {
 		CreatedAt:   someDate,
 	}.Build()
 	require.NoError(t, err)
-	fileExtension := "jpeg"
+	fileExtension := ".jpeg"
 
 	fileContents := []byte("some contents")
 	err = store.SaveExpensePhoto(someExp, fileExtension, io.NopCloser(bytes.NewReader(fileContents)))
 	require.NoError(t, err)
 
-	expectedFilepath := filepath + "/photos/100424_1340_57f8ea23-4387-491b-bbb0-7195a0e15127." + fileExtension
+	expectedFilepath := filepath + "/photos/100424_1340_57f8ea23-4387-491b-bbb0-7195a0e15127" + fileExtension
 	fi, err := os.Stat(expectedFilepath)
 	require.NoError(t, err)
 	require.False(t, fi.IsDir())
