@@ -1,6 +1,8 @@
 package handler_test
 
 import (
+	"embed"
+	"html/template"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddExpense(t *testing.T) {
+//go:embed templates/*.html
+var content embed.FS
+
+func TestExpenses(t *testing.T) {
+	templates, err := template.ParseFS(content, "templates/*.html")
+	require.NoError(t, err)
 	pf := newPersistenceFake()
 	is := newImagestoreFake()
 	h, err := handler.NewHandler(pf, is, zerolog.New(zerolog.Nop()))
@@ -21,7 +28,7 @@ func TestAddExpense(t *testing.T) {
 	mux := http.NewServeMux()
 	h.Routes(mux)
 
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequest("GET", "/expenses", nil)
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -29,6 +36,9 @@ func TestAddExpense(t *testing.T) {
 	mux.ServeHTTP(rr, req)
 
 	require.Equal(t, http.StatusOK, rr.Result().StatusCode)
+	tt, err := templates.Parse(rr.Body.String())
+	require.NoError(t, err)
+	t.Log(tt)
 }
 
 type persistenceFake struct {
