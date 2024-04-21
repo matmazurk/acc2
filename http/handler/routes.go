@@ -24,7 +24,7 @@ func (h handler) MountSrc() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Expires", time.Unix(0, 0).Format(time.RFC1123))
 
-		http.StripPrefix("/src/", http.FileServer(http.Dir("./http/src/"))).ServeHTTP(w, r)
+		http.StripPrefix("/src/", http.FileServer(http.Dir("./http/handler/src/"))).ServeHTTP(w, r)
 	})
 }
 
