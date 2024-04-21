@@ -114,10 +114,18 @@ func (h handler) AddExpense() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseMultipartForm(10 << 20)
 		if err != nil {
+			if errors.Is(err, http.ErrNotMultipart) {
+				h.logger.Warn().Err(err).Msg("received request with invalid content type")
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			h.logger.Error().Err(err).Msg("could not parse multipart form")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		description := r.FormValue("description")
 		amount := r.FormValue("amount")
 		currency := r.FormValue("currency")
@@ -133,6 +141,15 @@ func (h handler) AddExpense() http.HandlerFunc {
 			CreatedAt:   time.Now(),
 		}.Build()
 		if err != nil {
+			h.logger.Warn().Err(err).Msg("invalid request for adding new expense")
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		err = h.savePhoto(r, exp)
+		if err != nil {
+			h.logger.Error().Err(err).Msg("could not save photo")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -140,6 +157,7 @@ func (h handler) AddExpense() http.HandlerFunc {
 
 		err = h.pers.Insert(exp)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("could not insert new expense")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -171,10 +189,8 @@ func (h handler) savePhoto(r *http.Request, e model.Expense) error {
 	if slices.Contains(exts, ".jpeg") {
 		ext = "jpeg"
 	} else if len(exts) > 0 {
-		// Get the first extension
 		ext = exts[0]
 	} else {
-		// Fallback to extracting extension from filename
 		ext = extractExtension(header.Filename)
 	}
 
