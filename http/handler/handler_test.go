@@ -102,11 +102,12 @@ func TestExpenses(t *testing.T) {
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		description := "expensive shopping"
+		amount := "22.22"
 		for k, v := range map[string]string{
 			"description": description,
 			"author":      "some payer",
 			"category":    "some category",
-			"amount":      "22.22",
+			"amount":      amount,
 			"currency":    "EUR",
 		} {
 			writer.WriteField(k, v)
@@ -126,6 +127,7 @@ func TestExpenses(t *testing.T) {
 		require.Len(t, pf.expenses, 1)
 		exp := pf.expenses[0]
 		require.Equal(t, description, exp.Description())
+		require.Equal(t, amount, exp.Amount())
 	})
 }
 
