@@ -16,8 +16,8 @@ func (h handler) Routes(m *http.ServeMux) {
 	m.HandleFunc("GET /", h.GetIndex())
 	m.HandleFunc("GET /categories", h.GetCategories())
 	m.HandleFunc("GET /add", h.GetAddExpense())
-	m.Handle("POST /expenses/add", logh(h.AddExpense()))
-	m.Handle("POST /categories/add", logh(h.AddCategory()))
+	m.Handle("POST /expenses/add", logh(h.AddExpense(), h.logger))
+	m.Handle("POST /categories/add", logh(h.AddCategory(), h.logger))
 }
 
 func (h handler) MountSrc() http.HandlerFunc {

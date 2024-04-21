@@ -2,18 +2,33 @@ package handler_test
 
 import (
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	ihttp "github.com/matmazurk/acc2/http"
+	"github.com/matmazurk/acc2/http/handler"
 	"github.com/matmazurk/acc2/model"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddExpense(t *testing.T) {
 	pf := newPersistenceFake()
 	is := newImagestoreFake()
-	m := ihttp.NewMux(pf, is, zerolog.New(zerolog.Nop()))
-	_ = m
+	h, err := handler.NewHandler(pf, is, zerolog.New(zerolog.Nop()))
+	require.NoError(t, err)
+
+	mux := http.NewServeMux()
+	h.Routes(mux)
+
+	req, err := http.NewRequest("GET", "/", nil)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	mux.ServeHTTP(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Result().StatusCode)
 }
 
 type persistenceFake struct {

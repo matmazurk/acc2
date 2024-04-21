@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"embed"
 	"html/template"
 	"io"
 
 	"github.com/matmazurk/acc2/model"
 	"github.com/rs/zerolog"
 )
+
+//go:embed templates/*.html
+var content embed.FS
 
 type Persistence interface {
 	Insert(e model.Expense) error
@@ -31,13 +35,16 @@ type handler struct {
 func NewHandler(
 	p Persistence,
 	is Imagestore,
-	temps *template.Template,
 	l zerolog.Logger,
-) handler {
+) (handler, error) {
+	templates, err := template.ParseFS(content, "templates/*.html")
+	if err != nil {
+		return handler{}, err
+	}
 	return handler{
 		pers:      p,
 		store:     is,
-		templates: temps,
+		templates: templates,
 		logger:    l,
-	}
+	}, nil
 }

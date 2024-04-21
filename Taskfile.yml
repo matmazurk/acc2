@@ -6,7 +6,7 @@ tasks:
       - go run . -s
   tailwind:
     cmds:
-      - npx tailwindcss -c ./http/src/tailwind.config.js -i ./http/src/input.css -o ./http/src/output.css 
+      - npx tailwindcss -c ./http/handler/src/tailwind.config.js -i ./http/handler/src/input.css -o ./http/handler/src/output.css 
   test:
     cmds:
       - go test -count=1 ./...
