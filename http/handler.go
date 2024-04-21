@@ -14,13 +14,13 @@ import (
 var content embed.FS
 
 type handler struct {
-	pers      inter
-	store     store
+	pers      persistence
+	store     imagestore
 	templates *template.Template
 	logger    zerolog.Logger
 }
 
-type inter interface {
+type persistence interface {
 	Insert(e model.Expense) error
 	SelectExpenses() ([]model.Expense, error)
 	CreatePayer(name string) error
@@ -29,11 +29,11 @@ type inter interface {
 	ListCategories() ([]string, error)
 }
 
-type store interface {
+type imagestore interface {
 	SaveExpensePhoto(e model.Expense, fileExtension string, r io.ReadCloser) error
 }
 
-func NewMux(i inter, s store, logger zerolog.Logger) *http.ServeMux {
+func NewMux(i persistence, s imagestore, logger zerolog.Logger) *http.ServeMux {
 	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
 		panic(err)
