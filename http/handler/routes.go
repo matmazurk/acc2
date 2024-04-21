@@ -12,15 +12,15 @@ import (
 )
 
 func (h handler) Routes(m *http.ServeMux) {
-	m.Handle("GET /src/", h.mountSrc())
-	m.HandleFunc("GET /", h.getIndex())
-	m.HandleFunc("GET /categories", h.getCategories())
-	m.HandleFunc("GET /add", h.getAddExpense())
-	m.Handle("POST /expenses/add", logh(h.addExpense()))
-	m.Handle("POST /categories/add", logh(h.addCategory()))
+	m.Handle("GET /src/", h.MountSrc())
+	m.HandleFunc("GET /", h.GetIndex())
+	m.HandleFunc("GET /categories", h.GetCategories())
+	m.HandleFunc("GET /add", h.GetAddExpense())
+	m.Handle("POST /expenses/add", logh(h.AddExpense()))
+	m.Handle("POST /categories/add", logh(h.AddCategory()))
 }
 
-func (h handler) mountSrc() http.HandlerFunc {
+func (h handler) MountSrc() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Expires", time.Unix(0, 0).Format(time.RFC1123))
 
@@ -28,7 +28,7 @@ func (h handler) mountSrc() http.HandlerFunc {
 	})
 }
 
-func (h handler) getIndex() http.HandlerFunc {
+func (h handler) GetIndex() http.HandlerFunc {
 	type expense struct {
 		Description string
 		Person      string
@@ -65,7 +65,7 @@ func (h handler) getIndex() http.HandlerFunc {
 		})
 }
 
-func (h handler) getCategories() http.HandlerFunc {
+func (h handler) GetCategories() http.HandlerFunc {
 	type data struct {
 		Categories []string
 	}
@@ -81,7 +81,7 @@ func (h handler) getCategories() http.HandlerFunc {
 	})
 }
 
-func (h handler) getAddExpense() http.HandlerFunc {
+func (h handler) GetAddExpense() http.HandlerFunc {
 	type data struct {
 		Users      []string
 		Categories []string
@@ -108,7 +108,7 @@ func (h handler) getAddExpense() http.HandlerFunc {
 	})
 }
 
-func (h handler) addExpense() http.HandlerFunc {
+func (h handler) AddExpense() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseMultipartForm(10 << 20)
 		if err != nil {
@@ -187,7 +187,7 @@ func extractExtension(filename string) string {
 	return ""
 }
 
-func (h handler) addCategory() http.HandlerFunc {
+func (h handler) AddCategory() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
