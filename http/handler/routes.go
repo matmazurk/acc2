@@ -14,10 +14,12 @@ import (
 func (h handler) Routes(m *http.ServeMux) {
 	m.Handle("GET /src/", h.MountSrc())
 	m.HandleFunc("GET /", h.GetIndex())
-	m.HandleFunc("GET /categories", h.GetCategories())
-	m.HandleFunc("GET /add", h.GetAddExpense())
-	m.Handle("POST /expenses/add", logh(h.AddExpense(), h.logger))
+
+	m.HandleFunc("GET /categories/add", h.GetCategories())
 	m.Handle("POST /categories/add", logh(h.AddCategory(), h.logger))
+
+	m.HandleFunc("GET /expenses/add", h.GetAddExpense())
+	m.Handle("POST /expenses/add", logh(h.AddExpense(), h.logger))
 }
 
 func (h handler) MountSrc() http.HandlerFunc {
