@@ -1,13 +1,13 @@
-package http
+package handler
 
 import (
 	"net/http"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
-func logh(next http.Handler) http.Handler {
+func logh(next http.Handler, logger zerolog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -17,7 +17,7 @@ func logh(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(cw, r)
 
-		log.Info().Str("path", r.URL.Path).Str("duration", time.Since(start).String()).Int("response_code", cw.statusCode).Msg("request handled")
+		logger.Info().Str("path", r.URL.Path).Str("duration", time.Since(start).String()).Int("response_code", cw.statusCode).Msg("request handled")
 	})
 }
 

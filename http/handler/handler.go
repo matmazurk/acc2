@@ -1,10 +1,9 @@
-package http
+package handler
 
 import (
 	"embed"
 	"html/template"
 	"io"
-	"net/http"
 
 	"github.com/matmazurk/acc2/model"
 	"github.com/rs/zerolog"
@@ -13,14 +12,7 @@ import (
 //go:embed templates/*.html
 var content embed.FS
 
-type handler struct {
-	pers      inter
-	store     store
-	templates *template.Template
-	logger    zerolog.Logger
-}
-
-type inter interface {
+type Persistence interface {
 	Insert(e model.Expense) error
 	SelectExpenses() ([]model.Expense, error)
 	CreatePayer(name string) error
@@ -29,26 +21,30 @@ type inter interface {
 	ListCategories() ([]string, error)
 }
 
-type store interface {
+type Imagestore interface {
 	SaveExpensePhoto(e model.Expense, fileExtension string, r io.ReadCloser) error
 }
 
-func NewMux(i inter, s store, logger zerolog.Logger) *http.ServeMux {
+type handler struct {
+	pers      Persistence
+	store     Imagestore
+	templates *template.Template
+	logger    zerolog.Logger
+}
+
+func NewHandler(
+	p Persistence,
+	is Imagestore,
+	l zerolog.Logger,
+) (handler, error) {
 	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
-		panic(err)
+		return handler{}, err
 	}
-
-	mux := http.NewServeMux()
-	i.CreatePayer("mat")
-	i.CreatePayer("paulka")
-	h := handler{
-		pers:      i,
-		store:     s,
+	return handler{
+		pers:      p,
+		store:     is,
 		templates: templates,
-		logger:    logger,
-	}
-	h.routes(mux)
-
-	return mux
+		logger:    l,
+	}, nil
 }

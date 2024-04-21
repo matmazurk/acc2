@@ -25,19 +25,19 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	log.Info().Msg("starting...")
+	logger.Info().Msg("starting...")
 
 	db, err := db.New(flags.dbFilename, logger)
 	if err != nil {
-		log.Fatal().Err(err).Str("filename", flags.dbFilename).Msg("could not open db")
+		logger.Fatal().Err(err).Str("filename", flags.dbFilename).Msg("could not open db")
 	}
-	log.Info().Str("filename", flags.dbFilename).Msg("database opened")
+	logger.Info().Str("filename", flags.dbFilename).Msg("database opened")
 
 	store, err := imagestore.NewStore(flags.storeDir, logger)
 	if err != nil {
-		log.Fatal().Err(err).Str("dir", flags.storeDir).Msg("could not open imagestore")
+		logger.Fatal().Err(err).Str("dir", flags.storeDir).Msg("could not open imagestore")
 	}
-	log.Info().Str("dir", flags.storeDir).Msg("imagestore opened")
+	logger.Info().Str("dir", flags.storeDir).Msg("imagestore opened")
 
 	server := &http.Server{
 		Addr:    flags.httpListenAddr,
@@ -45,10 +45,10 @@ func main() {
 	}
 
 	go func() {
-		log.Info().Str("listen_addr", flags.httpListenAddr).Msg("starting http server")
+		logger.Info().Str("listen_addr", flags.httpListenAddr).Msg("starting http server")
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal().Err(err).Msg("error http server listen")
+			logger.Fatal().Err(err).Msg("error http server listen")
 		}
 	}()
 
@@ -57,15 +57,15 @@ func main() {
 	<-sigCh
 	fmt.Println()
 
-	log.Info().Msg("shutting down http server...")
+	logger.Info().Msg("shutting down http server...")
 	ctx, scancel := context.WithTimeout(ctx, 5*time.Second)
 	err = server.Shutdown(ctx)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error shutting down http server")
+		logger.Fatal().Err(err).Msg("error shutting down http server")
 	}
 	scancel()
 
-	log.Info().Msg("http server gracefully shutdown")
+	logger.Info().Msg("http server gracefully shutdown")
 }
 
 type flags struct {

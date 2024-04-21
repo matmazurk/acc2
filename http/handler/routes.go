@@ -1,4 +1,4 @@
-package http
+package handler
 
 import (
 	"errors"
@@ -11,24 +11,26 @@ import (
 	"github.com/matmazurk/acc2/model"
 )
 
-func (h handler) routes(m *http.ServeMux) {
-	m.Handle("GET /src/", h.mountSrc())
-	m.HandleFunc("GET /", h.getIndex())
-	m.HandleFunc("GET /categories", h.getCategories())
-	m.HandleFunc("GET /add", h.getAddExpense())
-	m.Handle("POST /expenses/add", logh(h.addExpense()))
-	m.Handle("POST /categories/add", logh(h.addCategory()))
+func (h handler) Routes(m *http.ServeMux) {
+	m.Handle("GET /src/", h.MountSrc())
+	m.HandleFunc("GET /", h.GetIndex())
+
+	m.HandleFunc("GET /categories/add", h.GetCategories())
+	m.Handle("POST /categories", logh(h.AddCategory(), h.logger))
+
+	m.HandleFunc("GET /expenses/add", h.GetAddExpense())
+	m.Handle("POST /expenses", logh(h.AddExpense(), h.logger))
 }
 
-func (h handler) mountSrc() http.HandlerFunc {
+func (h handler) MountSrc() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Expires", time.Unix(0, 0).Format(time.RFC1123))
 
-		http.StripPrefix("/src/", http.FileServer(http.Dir("./http/src/"))).ServeHTTP(w, r)
+		http.StripPrefix("/src/", http.FileServer(http.Dir("./http/handler/src/"))).ServeHTTP(w, r)
 	})
 }
 
-func (h handler) getIndex() http.HandlerFunc {
+func (h handler) GetIndex() http.HandlerFunc {
 	type expense struct {
 		Description string
 		Person      string
@@ -65,7 +67,7 @@ func (h handler) getIndex() http.HandlerFunc {
 		})
 }
 
-func (h handler) getCategories() http.HandlerFunc {
+func (h handler) GetCategories() http.HandlerFunc {
 	type data struct {
 		Categories []string
 	}
@@ -81,7 +83,7 @@ func (h handler) getCategories() http.HandlerFunc {
 	})
 }
 
-func (h handler) getAddExpense() http.HandlerFunc {
+func (h handler) GetAddExpense() http.HandlerFunc {
 	type data struct {
 		Users      []string
 		Categories []string
@@ -108,14 +110,22 @@ func (h handler) getAddExpense() http.HandlerFunc {
 	})
 }
 
-func (h handler) addExpense() http.HandlerFunc {
+func (h handler) AddExpense() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseMultipartForm(10 << 20)
 		if err != nil {
+			if errors.Is(err, http.ErrNotMultipart) {
+				h.logger.Warn().Err(err).Msg("received request with invalid content type")
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			h.logger.Error().Err(err).Msg("could not parse multipart form")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		description := r.FormValue("description")
 		amount := r.FormValue("amount")
 		currency := r.FormValue("currency")
@@ -131,6 +141,15 @@ func (h handler) addExpense() http.HandlerFunc {
 			CreatedAt:   time.Now(),
 		}.Build()
 		if err != nil {
+			h.logger.Warn().Err(err).Msg("invalid request for adding new expense")
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		err = h.savePhoto(r, exp)
+		if err != nil {
+			h.logger.Error().Err(err).Msg("could not save photo")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -138,6 +157,7 @@ func (h handler) addExpense() http.HandlerFunc {
 
 		err = h.pers.Insert(exp)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("could not insert new expense")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -169,10 +189,8 @@ func (h handler) savePhoto(r *http.Request, e model.Expense) error {
 	if slices.Contains(exts, ".jpeg") {
 		ext = "jpeg"
 	} else if len(exts) > 0 {
-		// Get the first extension
 		ext = exts[0]
 	} else {
-		// Fallback to extracting extension from filename
 		ext = extractExtension(header.Filename)
 	}
 
@@ -187,7 +205,7 @@ func extractExtension(filename string) string {
 	return ""
 }
 
-func (h handler) addCategory() http.HandlerFunc {
+func (h handler) AddCategory() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
