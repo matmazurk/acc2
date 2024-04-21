@@ -3,3 +3,4 @@ tmp/
 *.jpg
 .DS_Store
 logs
+photos/
