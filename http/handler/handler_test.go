@@ -89,7 +89,6 @@ func TestExpenses(t *testing.T) {
 
 				rr := httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-
 				if rr.Result().StatusCode != http.StatusBadRequest {
 					t.Logf("body:'%s'", rr.Body.String())
 					t.Fatalf("received status code different than expected:\n%d != %d", rr.Result().StatusCode, http.StatusBadRequest)
