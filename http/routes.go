@@ -29,7 +29,7 @@ func (h handler) mountSrc() http.HandlerFunc {
 }
 
 func (h handler) getIndex() http.HandlerFunc {
-	type Expense struct {
+	type expense struct {
 		Description string
 		Person      string
 		Amount      string
@@ -38,7 +38,7 @@ func (h handler) getIndex() http.HandlerFunc {
 		Time        string
 	}
 	type data struct {
-		Expenses []Expense
+		Expenses []expense
 	}
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
@@ -49,10 +49,10 @@ func (h handler) getIndex() http.HandlerFunc {
 				return
 			}
 			d := data{
-				Expenses: make([]Expense, len(exps)),
+				Expenses: make([]expense, len(exps)),
 			}
 			for i, e := range exps {
-				d.Expenses[i] = Expense{
+				d.Expenses[i] = expense{
 					Description: e.Description(),
 					Person:      e.Payer(),
 					Amount:      e.Amount(),
@@ -66,7 +66,7 @@ func (h handler) getIndex() http.HandlerFunc {
 }
 
 func (h handler) getCategories() http.HandlerFunc {
-	type ddata struct {
+	type data struct {
 		Categories []string
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -76,13 +76,13 @@ func (h handler) getCategories() http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-		data := ddata{Categories: categories}
+		data := data{Categories: categories}
 		h.templates.ExecuteTemplate(w, "categories.html", data)
 	})
 }
 
 func (h handler) getAddExpense() http.HandlerFunc {
-	type Data struct {
+	type data struct {
 		Users      []string
 		Categories []string
 	}
@@ -100,7 +100,7 @@ func (h handler) getAddExpense() http.HandlerFunc {
 			return
 		}
 
-		data := Data{
+		data := data{
 			Users:      payers,
 			Categories: categories,
 		}
@@ -134,12 +134,6 @@ func (h handler) addExpense() http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
-		}
-		// Copy the photo data from the form to the new file
-		err = h.savePhoto(r, exp)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
 		}
 
 		err = h.pers.Insert(exp)
