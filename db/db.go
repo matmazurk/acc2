@@ -3,25 +3,27 @@ package db
 import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"github.com/matmazurk/acc2/model"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 type db struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger zerolog.Logger
 }
 
-func New(path string) (db, error) {
+func New(path string, logger zerolog.Logger) (db, error) {
 	database, err := gorm.Open(sqlite.Open(path), &gorm.Config{
 		SkipDefaultTransaction: false,
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
 		FullSaveAssociations: false,
-		Logger:               logger.Default.LogMode(logger.Silent),
+		Logger:               gormlogger.Default.LogMode(gormlogger.Silent),
 	})
 	if err != nil {
 		return db{}, errors.Errorf("could not connect to database under '%s'", path)

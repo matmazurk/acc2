@@ -7,19 +7,22 @@ import (
 
 	"github.com/matmazurk/acc2/model"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 type store struct {
 	basepath string
+	logger   zerolog.Logger
 }
 
-func NewStore(basepath string) (store, error) {
+func NewStore(basepath string, logger zerolog.Logger) (store, error) {
 	err := os.MkdirAll(basepath+photosRelativeDir, 0o750)
 	if err != nil && !os.IsExist(err) {
 		return store{}, errors.Wrap(err, "could not create photos dir")
 	}
 	return store{
 		basepath: basepath,
+		logger:   logger,
 	}, nil
 }
 

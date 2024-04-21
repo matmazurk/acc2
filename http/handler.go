@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/matmazurk/acc2/model"
+	"github.com/rs/zerolog"
 )
 
 //go:embed templates/*.html
@@ -16,6 +17,7 @@ type handler struct {
 	pers      inter
 	store     store
 	templates *template.Template
+	logger    zerolog.Logger
 }
 
 type inter interface {
@@ -31,7 +33,7 @@ type store interface {
 	SaveExpensePhoto(e model.Expense, fileExtension string, r io.ReadCloser) error
 }
 
-func NewMux(i inter, s store) *http.ServeMux {
+func NewMux(i inter, s store, logger zerolog.Logger) *http.ServeMux {
 	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
 		panic(err)
@@ -44,6 +46,7 @@ func NewMux(i inter, s store) *http.ServeMux {
 		pers:      i,
 		store:     s,
 		templates: templates,
+		logger:    logger,
 	}
 	h.routes(mux)
 

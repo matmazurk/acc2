@@ -20,20 +20,20 @@ import (
 
 func main() {
 	flags := parseFlags()
-	cleanup := setup(flags)
+	logger, cleanup := setup(flags)
 	defer cleanup()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	log.Info().Msg("starting...")
 
-	db, err := db.New(flags.dbFilename)
+	db, err := db.New(flags.dbFilename, logger)
 	if err != nil {
 		log.Fatal().Err(err).Str("filename", flags.dbFilename).Msg("could not open db")
 	}
 	log.Info().Str("filename", flags.dbFilename).Msg("database opened")
 
-	store, err := imagestore.NewStore(flags.storeDir)
+	store, err := imagestore.NewStore(flags.storeDir, logger)
 	if err != nil {
 		log.Fatal().Err(err).Str("dir", flags.storeDir).Msg("could not open imagestore")
 	}
@@ -41,7 +41,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    flags.httpListenAddr,
-		Handler: lhttp.NewMux(db, store),
+		Handler: lhttp.NewMux(db, store, logger),
 	}
 
 	go func() {
@@ -88,21 +88,22 @@ func parseFlags() flags {
 	return f
 }
 
-func setup(f flags) func() {
+func setup(f flags) (zerolog.Logger, func()) {
 	var callbacks []func()
+	var logger zerolog.Logger
 
 	if f.printToStdout {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+		logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 	} else {
 		f, err := os.OpenFile("logs", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not open 'logs' file")
 		}
-		log.Logger = log.Output(f)
+		logger = log.Output(f)
 		callbacks = append(callbacks, func() { f.Close() })
 	}
 
-	return func() {
+	return logger, func() {
 		for _, c := range callbacks {
 			c()
 		}

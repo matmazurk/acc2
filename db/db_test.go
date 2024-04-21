@@ -7,8 +7,11 @@ import (
 
 	"github.com/matmazurk/acc2/db"
 	"github.com/matmazurk/acc2/model"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
+
+var logger = zerolog.New(zerolog.Nop())
 
 func TestDB(t *testing.T) {
 	dir, err := os.MkdirTemp(".", "_testing_bin_")
@@ -16,7 +19,7 @@ func TestDB(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	dbFilepath := dir + "/exps.db"
-	database, err := db.New(dbFilepath)
+	database, err := db.New(dbFilepath, logger)
 	require.NoError(t, err)
 
 	const payer = "some-payer"
