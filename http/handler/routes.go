@@ -1,4 +1,4 @@
-package http
+package handler
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"github.com/matmazurk/acc2/model"
 )
 
-func (h handler) routes(m *http.ServeMux) {
+func (h handler) Routes(m *http.ServeMux) {
 	m.Handle("GET /src/", h.mountSrc())
 	m.HandleFunc("GET /", h.getIndex())
 	m.HandleFunc("GET /categories", h.getCategories())
