@@ -124,6 +124,7 @@ func TestExpenses(t *testing.T) {
 			t.Logf("body:'%s'", rr.Body.String())
 			t.Fatalf("received status code different than expected:\n%d != %d", rr.Result().StatusCode, http.StatusBadRequest)
 		}
+
 		require.Len(t, pf.expenses, 1)
 		exp := pf.expenses[0]
 		require.Equal(t, description, exp.Description())
