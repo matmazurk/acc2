@@ -191,7 +191,7 @@ func (h handler) savePhoto(r *http.Request, e model.Expense) error {
 
 	var ext string
 	if slices.Contains(exts, ".jpeg") {
-		ext = "jpeg"
+		ext = ".jpeg"
 	} else if len(exts) > 0 {
 		ext = exts[0]
 	} else {

@@ -54,5 +54,5 @@ func (s store) dirAbsolutePath() string {
 }
 
 func (s store) providePhotoAbsolutePath(e model.Expense, fileExtension string) string {
-	return fmt.Sprintf("%s/%s_%s.%s", s.dirAbsolutePath(), e.CreatedAt().Format(filenameTimeLayout), e.ID(), fileExtension)
+	return fmt.Sprintf("%s/%s_%s%s", s.dirAbsolutePath(), e.CreatedAt().Format(filenameTimeLayout), e.ID(), fileExtension)
 }
