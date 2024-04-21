@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"embed"
 	"errors"
 	"mime"
 	"net/http"
@@ -10,6 +11,9 @@ import (
 
 	"github.com/matmazurk/acc2/model"
 )
+
+//go:embed src/*
+var src embed.FS
 
 func (h handler) Routes(m *http.ServeMux) {
 	m.Handle("GET /src/", h.MountSrc())
@@ -26,7 +30,7 @@ func (h handler) MountSrc() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Expires", time.Unix(0, 0).Format(time.RFC1123))
 
-		http.StripPrefix("/src/", http.FileServer(http.Dir("./http/handler/src/"))).ServeHTTP(w, r)
+		http.FileServer(http.FS(src)).ServeHTTP(w, r)
 	})
 }
 
