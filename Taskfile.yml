@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  run:
+    cmds:
+      - go run . -s
+  tailwind:
+    cmds:
+      - npx tailwindcss -c ./http/src/tailwind.config.js -i ./http/src/input.css -o ./http/src/output.css 
+  test:
+    cmds:
+      - go test -count=1 ./...
