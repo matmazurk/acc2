@@ -548,10 +548,6 @@ video {
   width: 24rem;
 }
 
-.w-screen {
-  width: 100vw;
-}
-
 .flex-row {
   flex-direction: row;
 }
