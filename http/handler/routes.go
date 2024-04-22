@@ -64,7 +64,7 @@ func (h handler) GetIndex() http.HandlerFunc {
 					Amount:      e.Amount(),
 					Category:    e.Category(),
 					Currency:    e.Currency(),
-					Time:        e.CreatedAt().Format("02 Jan 06 15:04"),
+					Time:        e.CreatedAt().In(h.location).Format("02 Jan 06 15:04"),
 				}
 			}
 			h.templates.ExecuteTemplate(w, "index.html", d)
@@ -142,7 +142,7 @@ func (h handler) AddExpense() http.HandlerFunc {
 			Category:    category,
 			Amount:      amount,
 			Currency:    currency,
-			CreatedAt:   time.Now(),
+			CreatedAt:   time.Now().In(h.location),
 		}.Build()
 		if err != nil {
 			h.logger.Warn().Err(err).Msg("invalid request for adding new expense")
