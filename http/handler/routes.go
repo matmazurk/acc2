@@ -24,6 +24,7 @@ func (h handler) Routes(m *http.ServeMux) {
 
 	m.HandleFunc("GET /expenses/add", h.GetAddExpense())
 	m.Handle("POST /expenses", logh(h.AddExpense(), h.logger))
+	m.Handle("POST /expenses/{id}/delete", logh(h.DeleteExpense(), h.logger))
 }
 
 func (h handler) MountSrc() http.HandlerFunc {
@@ -36,6 +37,7 @@ func (h handler) MountSrc() http.HandlerFunc {
 
 func (h handler) GetIndex() http.HandlerFunc {
 	type expense struct {
+		ID          string
 		Description string
 		Person      string
 		Amount      string
@@ -59,6 +61,7 @@ func (h handler) GetIndex() http.HandlerFunc {
 			}
 			for i, e := range exps {
 				d.Expenses[i] = expense{
+					ID:          e.ID(),
 					Description: e.Description(),
 					Person:      e.Payer(),
 					Amount:      e.Amount(),
@@ -220,6 +223,34 @@ func (h handler) AddCategory() http.HandlerFunc {
 		category := r.FormValue("category")
 
 		err = h.pers.CreateCategory(category)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	})
+}
+
+func (h handler) DeleteExpense() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		idString := r.PathValue("id")
+
+		exps, err := h.pers.SelectExpenses()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		idx := slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == idString })
+		if idx == -1 {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("expense " + idString + " not found"))
+			return
+		}
+
+		err = h.pers.RemoveExpense(exps[idx])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

@@ -173,6 +173,10 @@ func (pf *persistenceFake) ListCategories() ([]string, error) {
 	return pf.categories, nil
 }
 
+func (pf *persistenceFake) RemoveExpense(_ model.Expense) error {
+	return nil
+}
+
 type imagestoreFake struct {
 	photos map[string][]byte
 }
