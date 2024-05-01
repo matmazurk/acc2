@@ -139,3 +139,12 @@ func (d db) ListCategories() ([]string, error) {
 
 	return ret, nil
 }
+
+func (d db) RemoveExpense(e model.Expense) error {
+	res := d.db.Where("id = ?", e.ID()).Delete(&expense{})
+	if res.Error != nil {
+		return res.Error
+	}
+
+	return nil
+}
