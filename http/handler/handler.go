@@ -16,6 +16,7 @@ var content embed.FS
 
 type Persistence interface {
 	Insert(e model.Expense) error
+	RemoveExpense(e model.Expense) error
 	SelectExpenses() ([]model.Expense, error)
 	CreatePayer(name string) error
 	CreateCategory(name string) error

@@ -2,6 +2,7 @@ package db_test
 
 import (
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -99,6 +100,34 @@ func TestDB(t *testing.T) {
 		for i, e := range exps {
 			expensesEqual(t, expectedOrder[i], e)
 		}
+	})
+
+	t.Run("should_properly_insert_delete_expense", func(t *testing.T) {
+		now := time.Now()
+		exp, err := model.ExpenseBuilder{
+			Description: "shopping",
+			Payer:       payer,
+			Category:    groceries,
+			Amount:      "10.22",
+			Currency:    "EUR",
+			CreatedAt:   now,
+		}.Build()
+		require.NoError(t, err)
+		err = database.Insert(exp)
+		require.NoError(t, err)
+
+		exps, err := database.SelectExpenses()
+		require.NoError(t, err)
+		idx := slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == exp.ID() })
+		require.Positive(t, idx)
+
+		err = database.RemoveExpense(exp)
+		require.NoError(t, err)
+
+		exps, err = database.SelectExpenses()
+		require.NoError(t, err)
+		idx = slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == exp.ID() })
+		require.Equal(t, -1, idx)
 	})
 }
 
