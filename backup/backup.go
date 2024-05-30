@@ -2,7 +2,6 @@ package backup
 
 import (
 	"archive/zip"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -26,7 +25,6 @@ func Backup(w io.WriteCloser, dir string) error {
 		}
 
 		if _, ok := excludedExtensions[filepath.Ext(path)]; ok {
-			fmt.Printf("skipping %s...\n", path)
 			return nil
 		}
 
