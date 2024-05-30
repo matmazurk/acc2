@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/matmazurk/acc2/backup"
 	"github.com/matmazurk/acc2/db"
 	lhttp "github.com/matmazurk/acc2/http"
 	"github.com/matmazurk/acc2/imagestore"
@@ -24,7 +26,6 @@ func main() {
 	defer cleanup()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	logger.Info().Msg("starting...")
 
 	db, err := db.New(flags.dbFilename, logger)
@@ -44,7 +45,11 @@ func main() {
 		Handler: lhttp.NewMux(db, store, logger),
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		logger.Info().Str("listen_addr", flags.httpListenAddr).Msg("starting http server")
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -52,20 +57,73 @@ func main() {
 		}
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		const jobHour = 3
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+
+		now := time.Now()
+		nextBackup := time.Date(now.Year(), now.Month(), now.Day(), jobHour, 0, 0, 0, time.UTC)
+		if now.After(nextBackup) {
+			nextBackup = nextBackup.Add(24 * time.Hour)
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Info().Msg("stopping cron")
+				return
+			case <-ticker.C:
+				now := time.Now()
+				if now.Before(nextBackup) {
+					continue
+				}
+
+				filename := fmt.Sprintf("acc-backup-%s.zip", now.Format("2006-01-02_15:04:05"))
+				logger.Info().Msgf("starting backup job, filename %s", filename)
+
+				f, err := os.Create(filename)
+				if err != nil {
+					logger.Error().Err(err).Msg("could not create new backup file")
+					continue
+				}
+
+				err = backup.Backup(f, filename)
+				if err != nil {
+					logger.Error().Err(err).Msg("could not execute backup")
+					f.Close()
+					os.Remove(filename)
+					continue
+				}
+				f.Close()
+
+				logger.Info().Msg("backup job successfully finished")
+
+				nextBackup = nextBackup.Add(24 * time.Hour)
+			}
+		}
+	}()
+
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
+	cancel()
 	fmt.Println()
 
 	logger.Info().Msg("shutting down http server...")
-	ctx, scancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	err = server.Shutdown(ctx)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("error shutting down http server")
 	}
-	scancel()
+	cancel()
 
 	logger.Info().Msg("http server gracefully shutdown")
+	wg.Wait()
+	logger.Info().Msg("all finished")
 }
 
 type flags struct {
