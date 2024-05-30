@@ -3,8 +3,11 @@ package handler
 import (
 	"embed"
 	"errors"
+	"io"
 	"mime"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -17,6 +20,7 @@ var src embed.FS
 
 func (h handler) Routes(m *http.ServeMux) {
 	m.Handle("GET /src/", h.MountSrc())
+	m.Handle("GET /photos/", h.MountPhotos())
 	m.HandleFunc("GET /", h.GetIndex())
 
 	m.HandleFunc("GET /categories/add", h.GetCategories())
@@ -32,6 +36,38 @@ func (h handler) MountSrc() http.HandlerFunc {
 		w.Header().Set("Expires", time.Unix(0, 0).Format(time.RFC1123))
 
 		http.FileServer(http.FS(src)).ServeHTTP(w, r)
+	})
+}
+
+func (h handler) MountPhotos() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fileName := filepath.Base(r.URL.Path)
+
+		filePath := filepath.Join("./photos", fileName)
+
+		fileInfo, err := os.Stat(filePath)
+		if os.IsNotExist(err) {
+			http.NotFound(w, r)
+			return
+		}
+		if fileInfo.IsDir() {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Open the file
+		file, err := os.Open(filePath)
+		if err != nil {
+			http.Error(w, "Unable to open the file", http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		w.Header().Set("Content-Type", "image/jpeg")
+
+		if _, err := io.Copy(w, file); err != nil {
+			http.Error(w, "Unable to serve the file", http.StatusInternalServerError)
+		}
 	})
 }
 
