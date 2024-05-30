@@ -3,8 +3,10 @@ package handler
 import (
 	"embed"
 	"errors"
+	"io"
 	"mime"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -25,6 +27,7 @@ func (h handler) Routes(m *http.ServeMux) {
 	m.HandleFunc("GET /expenses/add", h.GetAddExpense())
 	m.Handle("POST /expenses", logh(h.AddExpense(), h.logger))
 	m.Handle("POST /expenses/{id}/delete", logh(h.DeleteExpense(), h.logger))
+	m.Handle("GET /expenses/{id}/photo", h.GetPhoto())
 }
 
 func (h handler) MountSrc() http.HandlerFunc {
@@ -246,7 +249,7 @@ func (h handler) DeleteExpense() http.HandlerFunc {
 		idx := slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == idString })
 		if idx == -1 {
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("expense " + idString + " not found"))
+			w.Write([]byte("expense '" + idString + "' not found"))
 			return
 		}
 
@@ -258,5 +261,40 @@ func (h handler) DeleteExpense() http.HandlerFunc {
 		}
 
 		http.Redirect(w, r, "/", http.StatusFound)
+	})
+}
+
+func (h handler) GetPhoto() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		idString := r.PathValue("id")
+
+		exps, err := h.pers.SelectExpenses()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		idx := slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == idString })
+		if idx == -1 {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("expense '" + idString + "' not found"))
+			return
+		}
+
+		photo, err := h.store.LoadExpensePhoto(exps[idx])
+		if err != nil {
+			if os.IsNotExist(err) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte("expense '" + idString + "' has no photo"))
+				return
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer photo.Close()
+
+		io.Copy(w, photo)
 	})
 }
