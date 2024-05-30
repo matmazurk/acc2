@@ -7,7 +7,6 @@ import (
 	"mime"
 	"net/http"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -20,7 +19,6 @@ var src embed.FS
 
 func (h handler) Routes(m *http.ServeMux) {
 	m.Handle("GET /src/", h.MountSrc())
-	m.Handle("GET /photos/", h.MountPhotos())
 	m.HandleFunc("GET /", h.GetIndex())
 
 	m.HandleFunc("GET /categories/add", h.GetCategories())
@@ -29,6 +27,7 @@ func (h handler) Routes(m *http.ServeMux) {
 	m.HandleFunc("GET /expenses/add", h.GetAddExpense())
 	m.Handle("POST /expenses", logh(h.AddExpense(), h.logger))
 	m.Handle("POST /expenses/{id}/delete", logh(h.DeleteExpense(), h.logger))
+	m.Handle("GET /expenses/{id}/photo", h.GetPhoto())
 }
 
 func (h handler) MountSrc() http.HandlerFunc {
@@ -36,38 +35,6 @@ func (h handler) MountSrc() http.HandlerFunc {
 		w.Header().Set("Expires", time.Unix(0, 0).Format(time.RFC1123))
 
 		http.FileServer(http.FS(src)).ServeHTTP(w, r)
-	})
-}
-
-func (h handler) MountPhotos() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fileName := filepath.Base(r.URL.Path)
-
-		filePath := filepath.Join("./photos", fileName)
-
-		fileInfo, err := os.Stat(filePath)
-		if os.IsNotExist(err) {
-			http.NotFound(w, r)
-			return
-		}
-		if fileInfo.IsDir() {
-			http.NotFound(w, r)
-			return
-		}
-
-		// Open the file
-		file, err := os.Open(filePath)
-		if err != nil {
-			http.Error(w, "Unable to open the file", http.StatusInternalServerError)
-			return
-		}
-		defer file.Close()
-
-		w.Header().Set("Content-Type", "image/jpeg")
-
-		if _, err := io.Copy(w, file); err != nil {
-			http.Error(w, "Unable to serve the file", http.StatusInternalServerError)
-		}
 	})
 }
 
@@ -282,7 +249,7 @@ func (h handler) DeleteExpense() http.HandlerFunc {
 		idx := slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == idString })
 		if idx == -1 {
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("expense " + idString + " not found"))
+			w.Write([]byte("expense '" + idString + "' not found"))
 			return
 		}
 
@@ -294,5 +261,40 @@ func (h handler) DeleteExpense() http.HandlerFunc {
 		}
 
 		http.Redirect(w, r, "/", http.StatusFound)
+	})
+}
+
+func (h handler) GetPhoto() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		idString := r.PathValue("id")
+
+		exps, err := h.pers.SelectExpenses()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		idx := slices.IndexFunc(exps, func(e model.Expense) bool { return e.ID() == idString })
+		if idx == -1 {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("expense '" + idString + "' not found"))
+			return
+		}
+
+		photo, err := h.store.LoadExpensePhoto(exps[idx])
+		if err != nil {
+			if os.IsNotExist(err) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte("expense '" + idString + "' has no photo"))
+				return
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer photo.Close()
+
+		io.Copy(w, photo)
 	})
 }

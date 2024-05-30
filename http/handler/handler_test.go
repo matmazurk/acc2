@@ -196,6 +196,10 @@ func (isf *imagestoreFake) SaveExpensePhoto(e model.Expense, fileExtension strin
 	return nil
 }
 
+func (isf *imagestoreFake) LoadExpensePhoto(e model.Expense) (io.ReadCloser, error) {
+	return nil, nil
+}
+
 func (isf *imagestoreFake) getPhoto(e model.Expense, fileExtension string) []byte {
 	return isf.photos[e.ID()+fileExtension]
 }

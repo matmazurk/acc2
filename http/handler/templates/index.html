@@ -27,6 +27,18 @@
     <ul id="expenses-list" class="space-y-1">
         {{ range .Expenses }}
         <li class="text-center flex flex-col border-solid border-2 rounded-lg p-2 relative">
+            <form action="/expenses/{{ .ID }}/photo" method="get" class="absolute top-0 left-0 mt-2 ml-2">
+                <button type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 32 32" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <rect width="32" height="32" rx="4" ry="4" fill="#e0e0e0" stroke="#b0b0b0" />
+                        <circle cx="8" cy="8" r="3" fill="#ffcc33" />
+                        <polygon points="4,28 16,12 28,28" fill="#90caf9" stroke="#2196f3" />
+                        <rect y="24" width="32" height="8" fill="#a5d6a7" stroke="#388e3c" />
+                        <rect width="32" height="32" rx="4" ry="4" fill="none" stroke="#b0b0b0" />
+                    </svg>
+                </button>
+            </form>
             <form action="/expenses/{{ .ID }}/delete" method="post" class="absolute top-0 right-0 mt-2 mr-2">
                 <button type="submit">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500" fill="none"

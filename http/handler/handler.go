@@ -26,6 +26,7 @@ type Persistence interface {
 
 type Imagestore interface {
 	SaveExpensePhoto(e model.Expense, fileExtension string, r io.ReadCloser) error
+	LoadExpensePhoto(e model.Expense) (io.ReadCloser, error)
 }
 
 type handler struct {
