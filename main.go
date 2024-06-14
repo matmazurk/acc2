@@ -91,7 +91,7 @@ func main() {
 					continue
 				}
 
-				err = backup.Backup(f, filename)
+				err = backup.Backup(f, ".")
 				if err != nil {
 					logger.Error().Err(err).Msg("could not execute backup")
 					f.Close()
