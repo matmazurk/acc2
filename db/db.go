@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+	
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -26,7 +28,7 @@ func New(path string, logger zerolog.Logger) (db, error) {
 		Logger:               gormlogger.Default.LogMode(gormlogger.Silent),
 	})
 	if err != nil {
-		return db{}, errors.Errorf("could not connect to database under '%s'", path)
+		return db{}, fmt.Errorf("could not connect to database under '%s': %w", path, err)
 	}
 
 	err = database.AutoMigrate(&expense{})
