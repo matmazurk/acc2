@@ -1,61 +1,50 @@
-name: Create Release with CGO Enabled
+name: Build and Upload Binary on Release
 
+# Trigger the workflow on a release event
 on:
-  push:
-    tags:
-      - "v*"   # Trigger on tags starting with 'v'
+  release:
+    types:
+      - created  # Trigger only when a new release is created
 
 permissions:
-  contents: write
+  contents: write  # Ensure the GITHUB_TOKEN has write permissions for the repo
 
 jobs:
-  build:
-    name: Build and Create Release with CGO
+  build-and-upload:
+    name: Build and Upload Go Binary
     runs-on: ubuntu-latest
 
-    env:
-      CGO_ENABLED: 1  # Enable CGO
-
     steps:
+      # Step 1: Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Set up Go environment
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23'  # Use the required Go version
-          
-      # Install the required dependencies for CGO
-      - name: Install C compiler
+          go-version: '1.23'  # Specify the Go version
+
+      # Step 3: Install necessary dependencies for CGO, if required
+      - name: Install C compiler (for CGO)
         run: |
           sudo apt-get update
           sudo apt-get install build-essential
 
-      # Build the project with CGO enabled
-      - name: Build Go project
-        run: |
-          CGO_ENABLED='1' go build -o acc2 .
-
-      # Create a GitHub Release
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      # Step 4: Build the Go project (enable CGO if required)
+      - name: Build Go binary
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          body: "Release created for version `${{ github.ref_name }}` with CGO enabled."
-          draft: false
-          prerelease: false
+          CGO_ENABLED: 1  # Enable CGO if needed
+        run: |
+          go build -o acc2 .
 
-      # Upload the built binary as a release asset
+      # Step 5: Upload the built binary as a release asset
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the GitHub token provided by Actions
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./myapp  # Path to the binary
-          asset_name: myapp
-          asset_content_type: application/octet-stream
+          upload_url: ${{ github.event.release.upload_url }}  # Upload URL provided by the release event
+          asset_path: ./acc2  # Path to the built binary
+          asset_name: acc2  # Name to use for the uploaded asset
+          asset_content_type: application/octet-stream  # MIME type for binary files
