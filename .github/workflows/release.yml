@@ -1,0 +1,58 @@
+name: Create Release with CGO Enabled
+
+on:
+  push:
+    tags:
+      - "v*"   # Trigger on tags starting with 'v'
+
+jobs:
+  build:
+    name: Build and Create Release with CGO
+    runs-on: ubuntu-latest
+
+    env:
+      CGO_ENABLED: 1  # Enable CGO
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'  # Use the required Go version
+          
+      # Install the required dependencies for CGO
+      - name: Install C compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential
+
+      # Build the project with CGO enabled
+      - name: Build Go project
+        run: |
+          go build -o acc2 ./...
+
+      # Create a GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          body: "Release created for version `${{ github.ref_name }}` with CGO enabled."
+          draft: false
+          prerelease: false
+
+      # Upload the built binary as a release asset
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./myapp  # Path to the binary
+          asset_name: myapp
+          asset_content_type: application/octet-stream
