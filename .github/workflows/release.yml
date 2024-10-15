@@ -31,7 +31,7 @@ jobs:
       # Build the project with CGO enabled
       - name: Build Go project
         run: |
-          go build -o acc2 ./...
+          CGO_ENABLED='1' go build -o acc2 .
 
       # Create a GitHub Release
       - name: Create GitHub Release
