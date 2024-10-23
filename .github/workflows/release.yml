@@ -25,26 +25,16 @@ jobs:
         with:
           go-version: '1.23'  # Specify the Go version
 
-      # Step 3: Install necessary dependencies for CGO, if required
-      - name: Install C compiler (for CGO)
+      # Build the binary targeting Alpine Linux (amd64 architecture)
+      - name: Build Go binary for Alpine AMD64
         run: |
-          sudo apt-get update
-          sudo apt-get install build-essential
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o expenses-alpine-amd64 .
 
-      # Step 4: Build the Go project (enable CGO if required)
-      - name: Build Go binary
-        env:
-          CGO_ENABLED: 1  # Enable CGO if needed
-        run: |
-          go build -o acc2 .
-
-      # Step 5: Upload the built binary as a release asset
+      # Upload the artifact (binary or zip)
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the GitHub token provided by Actions
         with:
-          upload_url: ${{ github.event.release.upload_url }}  # Upload URL provided by the release event
-          asset_path: ./acc2  # Path to the built binary
-          asset_name: acc2  # Name to use for the uploaded asset
-          asset_content_type: application/octet-stream  # MIME type for binary files
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./expenses-alpine-amd64  # Use binary file directly if not zipping
+          asset_name: expenses-alpine-amd64
+          asset_content_type: application/octet-stream

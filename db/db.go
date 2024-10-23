@@ -1,122 +1,89 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
-	
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	gormlogger "gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/matmazurk/acc2/model"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
+	_ "modernc.org/sqlite"
 )
 
-type db struct {
-	db     *gorm.DB
-	logger zerolog.Logger
+type Client struct {
+	db *sqlx.DB
 }
 
-func New(path string, logger zerolog.Logger) (db, error) {
-	database, err := gorm.Open(sqlite.Open(path), &gorm.Config{
-		SkipDefaultTransaction: false,
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true,
-		},
-		FullSaveAssociations: false,
-		Logger:               gormlogger.Default.LogMode(gormlogger.Silent),
-	})
+func New(path string) (Client, error) {
+	db, err := sqlx.Open("sqlite", path)
 	if err != nil {
-		return db{}, fmt.Errorf("could not connect to database under '%s': %w", path, err)
+		return Client{}, fmt.Errorf("could not open database: %w", err)
 	}
 
-	err = database.AutoMigrate(&expense{})
-	if err != nil {
-		return db{}, errors.Wrap(err, "could not auto migrate expense table")
-	}
-
-	return db{db: database}, nil
+	return Client{db: db}, nil
 }
 
-func (d db) Insert(e model.Expense) error {
-	var p payer
-	res := d.db.First(&p, "name = ?", e.Payer())
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return errors.Errorf("payer '%s' not found", e.Payer())
-		}
-		return res.Error
+func (d Client) Insert(e model.Expense) error {
+	p, err := d.getPayer(e.Payer())
+	if err != nil {
+		return err
 	}
 
-	var c category
-	res = d.db.First(&c, "name = ?", e.Category())
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return errors.Errorf("category '%s' not found", e.Payer())
-		}
-		return res.Error
+	c, err := d.getCategory(e.Category())
+	if err != nil {
+		return err
 	}
 
-	toInsert := expense{
-		ID:          e.ID(),
-		Description: e.Description(),
-		PayerID:     p.ID,
-		CategoryID:  c.ID,
-		Amount:      e.Amount(),
-		Currency:    e.Currency(),
-		CreatedAt:   e.CreatedAt(),
-	}
-	res = d.db.Create(&toInsert)
-	if res.Error != nil {
-		return res.Error
+	_, err = d.db.Exec(`
+		INSERT INTO expense(id, category_id, payer_id, amount, currency, description, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		e.ID(), c.ID, p.ID, e.Amount(), e.Currency(), e.Description(), e.CreatedAt(),
+	)
+	if err != nil {
+		return fmt.Errorf("could not insert new expense: %w", err)
 	}
 
 	return nil
 }
 
-func (d db) SelectExpenses() ([]model.Expense, error) {
+func (d Client) SelectExpenses() ([]model.Expense, error) {
 	var exps []expense
-	res := d.db.Preload("Payer").Preload("Category").Model(&expense{}).Order("created_at DESC").Find(&exps)
-	if res.Error != nil {
-		return nil, res.Error
+	err := d.db.Select(&exps, "SELECT * FROM expenses ORDER BY created_at DESC")
+	if err != nil {
+		return nil, fmt.Errorf("could not select expenses: %w", err)
 	}
 
 	es := make([]model.Expense, len(exps))
-	var err error
 	for i, e := range exps {
-		es[i], err = e.toExpense()
-		if err != nil {
-			return nil, err
-		}
+		es[i], err = model.ExpenseBuilder{
+			Id:          e.ID,
+			Description: e.Description,
+			Payer:       e.Payer.Name,
+			Category:    e.CategoryID.Name,
+			Amount:      e.Amount,
+			Currency:    e.Currency,
+			CreatedAt:   e.CreatedAt,
+		}.Build()
 	}
 
 	return es, nil
 }
 
-func (d db) CreatePayer(name string) error {
-	res := d.db.Create(&payer{Name: name})
-	if res.Error != nil {
-		return res.Error
-	}
-
-	return nil
+func (d Client) CreatePayer(name string) error {
+	_, err := d.db.Exec("INSERT INTO payer(name) VALUES (?)", name)
+	return err
 }
 
-func (d db) CreateCategory(name string) error {
-	res := d.db.Create(&category{Name: name})
-	if res.Error != nil {
-		return res.Error
-	}
-
-	return nil
+func (d Client) CreateCategory(name string) error {
+	_, err := d.db.Exec("INSERT INTO category(name) VALUES (?)", name)
+	return err
 }
 
-func (d db) ListPayers() ([]string, error) {
+func (d Client) ListPayers() ([]string, error) {
 	var payers []payer
-	res := d.db.Find(&payers)
-	if res.Error != nil {
-		return nil, res.Error
+	err := d.db.Select(&payers, "SELECT * FROM payer")
+	if err != nil {
+		return nil, fmt.Errorf("could not get all payers: %w", err)
 	}
 
 	ret := make([]string, len(payers))
@@ -127,11 +94,11 @@ func (d db) ListPayers() ([]string, error) {
 	return ret, nil
 }
 
-func (d db) ListCategories() ([]string, error) {
+func (d Client) ListCategories() ([]string, error) {
 	var categories []category
-	res := d.db.Find(&categories)
-	if res.Error != nil {
-		return nil, res.Error
+	err := d.db.Select(&categories, "SELECT * FROM category")
+	if err != nil {
+		return nil, fmt.Errorf("could not get all categories: %w", err)
 	}
 
 	ret := make([]string, len(categories))
@@ -142,11 +109,37 @@ func (d db) ListCategories() ([]string, error) {
 	return ret, nil
 }
 
-func (d db) RemoveExpense(e model.Expense) error {
-	res := d.db.Where("id = ?", e.ID()).Delete(&expense{})
-	if res.Error != nil {
-		return res.Error
+func (d Client) RemoveExpense(e model.Expense) error {
+	_, err := d.db.Exec("DELETE FROM expense WHERE id = ?", e.ID())
+	if err != nil {
+		return fmt.Errorf("could not remove expense: %w", err)
 	}
 
 	return nil
+}
+
+func (d Client) getPayer(name string) (payer, error) {
+	var p payer
+	err := d.db.Get(&p, "SELECT * FROM payer WHERE name = ?", name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return p, fmt.Errorf("no such payer: '%s'", name)
+		}
+		return p, fmt.Errorf("could not get payer: %w", err)
+	}
+
+	return p, nil
+}
+
+func (d Client) getCategory(name string) (category, error) {
+	var c category
+	err := d.db.Get(&c, "SELECT * FROM category WHERE name = ?", name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c, fmt.Errorf("no such category: '%s'", name)
+		}
+		return c, fmt.Errorf("could not get category: %w", err)
+	}
+
+	return c, nil
 }
