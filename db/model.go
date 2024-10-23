@@ -2,37 +2,21 @@ package db
 
 import (
 	"time"
-
-	"github.com/matmazurk/acc2/model"
 )
 
 type expense struct {
-	ID          string
-	Description string
-	PayerID     uint
-	Payer       payer `gorm:"foreignKey:PayerID"`
-	CategoryID  uint
-	Category    category `gorm:"foreignKey:CategoryID"`
-	Amount      string
-	Currency    string
-	CreatedAt   time.Time
-}
-
-func (e expense) toExpense() (model.Expense, error) {
-	return model.ExpenseBuilder{
-		Id:          e.ID,
-		Description: e.Description,
-		Payer:       e.Payer.Name,
-		Category:    e.Category.Name,
-		Amount:      e.Amount,
-		Currency:    e.Currency,
-		CreatedAt:   e.CreatedAt,
-	}.Build()
+	ID          string    `db:"id"`
+	Payer       payer     `db:"payer"`
+	CategoryID  category  `db:"category"`
+	Description string    `db:"description"`
+	Amount      string    `db:"amount"`
+	Currency    string    `db:"currency"`
+	CreatedAt   time.Time `db:"created_at"`
 }
 
 type payer struct {
-	ID   uint
-	Name string `gorm:"uniqueIndex"`
+	ID   uint   `db:"id"`
+	Name string `db:"name"`
 }
 
 func (p payer) isZero() bool {
@@ -40,8 +24,8 @@ func (p payer) isZero() bool {
 }
 
 type category struct {
-	ID   uint
-	Name string `gorm:"uniqueIndex"`
+	ID   uint   `db:"id"`
+	Name string `db:"name"`
 }
 
 func (c category) isZero() bool {

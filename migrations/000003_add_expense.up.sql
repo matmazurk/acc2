@@ -1,10 +1,11 @@
 CREATE TABLE IF NOT EXISTS expense (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id TEXT PRIMARY KEY,
 	category_id INTEGER, 
 	payer_id INTEGER,
 	amount TEXT NOT NULL,
 	currency TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	description TEXT NOT NULL,
+        created_at DATETIME NOT NULL,
 
 	FOREIGN KEY (category_id) REFERENCES category(id),
 	FOREIGN KEY (payer_id) REFERENCES payer(id)
