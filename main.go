@@ -28,7 +28,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	logger.Info().Msg("starting...")
 
-	db, err := db.New(flags.dbFilename, logger)
+	db, err := db.New(flags.dbFilename)
 	if err != nil {
 		logger.Fatal().Err(err).Str("filename", flags.dbFilename).Msg("could not open db")
 	}
