@@ -10,11 +10,8 @@ import (
 
 	"github.com/matmazurk/acc2/imagestore"
 	"github.com/matmazurk/acc2/model"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
-
-var logger = zerolog.New(zerolog.Nop())
 
 func TestNewStore(t *testing.T) {
 	t.Run("should_do_nothing_when_dir_exists", func(t *testing.T) {
@@ -22,13 +19,13 @@ func TestNewStore(t *testing.T) {
 		require.NoError(t, err)
 		t.Cleanup(func() { os.RemoveAll(dir) })
 
-		_, err = imagestore.NewStore(dir, logger)
+		_, err = imagestore.NewStore(dir)
 		require.NoError(t, err)
 	})
 
 	t.Run("should_create_dir_when_no_exists", func(t *testing.T) {
 		filepath := fmt.Sprintf("./%s%d", "__tmpdir_", time.Now().UnixMilli())
-		_, err := imagestore.NewStore(filepath, logger)
+		_, err := imagestore.NewStore(filepath)
 		require.NoError(t, err)
 
 		fi, err := os.Stat(filepath)
@@ -46,7 +43,7 @@ func TestNewStore(t *testing.T) {
 
 func TestSaveExpensePhoto(t *testing.T) {
 	filepath := fmt.Sprintf("./%s%d", "__tmpdir_", time.Now().UnixMilli())
-	store, err := imagestore.NewStore(filepath, logger)
+	store, err := imagestore.NewStore(filepath)
 	require.NoError(t, err)
 	defer os.RemoveAll(filepath)
 

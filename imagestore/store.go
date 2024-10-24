@@ -16,14 +16,13 @@ type store struct {
 	logger   zerolog.Logger
 }
 
-func NewStore(basepath string, logger zerolog.Logger) (store, error) {
+func NewStore(basepath string) (store, error) {
 	err := os.MkdirAll(basepath+photosRelativeDir, 0o750)
 	if err != nil && !os.IsExist(err) {
 		return store{}, errors.Wrap(err, "could not create photos dir")
 	}
 	return store{
 		basepath: basepath,
-		logger:   logger,
 	}, nil
 }
 
