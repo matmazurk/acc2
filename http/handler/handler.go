@@ -40,7 +40,6 @@ type handler struct {
 func NewHandler(
 	p Persistence,
 	is Imagestore,
-	l zerolog.Logger,
 ) (handler, error) {
 	templates, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
@@ -55,6 +54,5 @@ func NewHandler(
 		store:     is,
 		templates: templates,
 		location:  loc,
-		logger:    l,
 	}, nil
 }
