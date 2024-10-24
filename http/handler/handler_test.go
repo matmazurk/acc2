@@ -10,14 +10,13 @@ import (
 
 	"github.com/matmazurk/acc2/http/handler"
 	"github.com/matmazurk/acc2/model"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExpenses(t *testing.T) {
 	pf := newPersistenceFake()
 	is := newImagestoreFake()
-	h, err := handler.NewHandler(pf, is, zerolog.New(zerolog.Nop()))
+	h, err := handler.NewHandler(pf, is)
 	require.NoError(t, err)
 
 	mux := http.NewServeMux()
