@@ -12,10 +12,4 @@ tasks:
       - go test -count=1 ./...
   new-migration:
     cmds:
-      - migrate create -dir migrations -ext sql -seq $NAME
-  migrate:
-    cmds:
-      - migrate -source file://migrations -database sqlite3://$DB_PATH up
-  migrate-down:
-    cmds:
-      - migrate -source file://migrations -database sqlite3://$DB_PATH down
+      - migrate create -dir db/migrations -ext sql -seq $NAME
