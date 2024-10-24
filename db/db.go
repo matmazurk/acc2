@@ -20,6 +20,11 @@ func New(path string) (Client, error) {
 		return Client{}, fmt.Errorf("could not open database: %w", err)
 	}
 
+	err = migrateUp(db)
+	if err != nil {
+		return Client{}, fmt.Errorf("could not migrate up: %w", err)
+	}
+
 	return Client{db: db}, nil
 }
 
